@@ -1,0 +1,134 @@
+name: artagram
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: artagram-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-artagram}
+      POSTGRES_USER: ${POSTGRES_USER:-artagram}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-artagram}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./postgres/init-multiple-dbs.sql:/docker-entrypoint-initdb.d/01-init-multiple-dbs.sql:ro
+    command: >
+      postgres
+      -c shared_buffers=128MB
+      -c max_connections=80
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-artagram} -d ${POSTGRES_DB:-artagram}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - artagram-net
+
+  redis:
+    image: redis:7-alpine
+    container_name: artagram-redis
+    restart: unless-stopped
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    command: ["redis-server", "--maxmemory", "192mb", "--maxmemory-policy", "allkeys-lru"]
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks:
+      - artagram-net
+
+  mongodb:
+    image: mongo:7
+    container_name: artagram-mongodb
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER:-artagram}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:-artagram}
+    ports:
+      - "${MONGO_PORT:-27017}:27017"
+    volumes:
+      - mongo_data:/data/db
+    command: ["mongod", "--wiredTigerCacheSizeGB", "0.25"]
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "-u", "${MONGO_USER:-artagram}", "-p", "${MONGO_PASSWORD:-artagram}", "--authenticationDatabase", "admin", "--eval", "db.adminCommand('ping').ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - artagram-net
+
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    container_name: artagram-rabbitmq
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-artagram}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-artagram}
+      RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS: "-rabbit vm_memory_high_watermark {absolute,268435456} -rabbitmq_management load_definitions \"/etc/rabbitmq/definitions.json\""
+    ports:
+      - "${RABBITMQ_PORT:-5672}:5672"
+      - "${RABBITMQ_UI_PORT:-15672}:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+      - ./rabbitmq/definitions.json:/etc/rabbitmq/definitions.json:ro
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - artagram-net
+
+  minio:
+    image: ghcr.io/shyim/local-s3:latest
+    container_name: artagram-minio
+    restart: unless-stopped
+    environment:
+      S3_ACCOUNT_ADMIN: ${MINIO_ROOT_USER:-artagram}:${MINIO_ROOT_PASSWORD:-artagram123}
+      S3_BUCKET: ${S3_BUCKET:-artagram-uploads}
+    ports:
+      - "${MINIO_API_PORT:-9000}:9000"
+    volumes:
+      - minio_data:/data
+    deploy:
+      resources:
+        limits:
+          memory: 384M
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:9000/ || exit 0"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - artagram-net
+
+volumes:
+  postgres_data:
+  mongo_data:
+  rabbitmq_data:
+  minio_data:
+
+networks:
+  artagram-net:
+    name: artagram-net
+    driver: bridge

@@ -1,0 +1,361 @@
+name: artagram
+
+services:
+  artagram-gateway:
+    build:
+      context: ../artagram-gateway
+      dockerfile: Dockerfile
+    container_name: artagram-gateway
+    restart: unless-stopped
+    ports:
+      - "${GATEWAY_PORT:-8080}:8080"
+    environment:
+      SERVER_PORT: 8080
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_DATABASE: 1
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173}
+      GATEWAY_JWT_ENABLED: ${GATEWAY_JWT_ENABLED:-false}
+      AUTH_JWKS_URI: http://artagram-auth:8081/.well-known/jwks.json
+      AUTH_SERVICE_URL: ${AUTH_SERVICE_URL:-http://artagram-lienzo:8084}
+      USERS_SERVICE_URL: ${USERS_SERVICE_URL:-http://artagram-lienzo:8084}
+      FEED_SERVICE_URL: ${FEED_SERVICE_URL:-http://artagram-lienzo:8084}
+      CHAT_SERVICE_URL: ${CHAT_SERVICE_URL:-http://artagram-lienzo:8084}
+      LIENZO_SERVICE_URL: ${LIENZO_SERVICE_URL:-http://artagram-lienzo:8084}
+      LIENZO_WS_URL: ${LIENZO_WS_URL:-ws://artagram-lienzo:8084}
+      JAVA_TOOL_OPTIONS: "-Xms64m -Xmx256m -XX:+UseSerialGC -XX:MaxMetaspaceSize=128m"
+    deploy:
+      resources:
+        limits:
+          memory: 384M
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - artagram-net
+
+  artagram-auth:
+    build:
+      context: ../artagram-auth
+      dockerfile: Dockerfile
+    container_name: artagram-auth
+    restart: unless-stopped
+    ports:
+      - "${AUTH_PORT:-8081}:8081"
+    environment:
+      SERVER_PORT: 8081
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: db_auth
+      DB_USER: ${POSTGRES_USER:-artagram}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-artagram}
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: ${RABBITMQ_USER:-artagram}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-artagram}
+      EMAIL_MODE: ${EMAIL_MODE:-log}
+      VERIFICACION_CORREO: ${VERIFICACION_CORREO:-false}
+      APP_BASE_URL: ${APP_BASE_URL:-http://localhost:5173}
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-seed}
+      JAVA_TOOL_OPTIONS: "-Xms64m -Xmx256m -XX:+UseSerialGC -XX:MaxMetaspaceSize=128m"
+    volumes:
+      - ./secrets-dev:/app/secrets-dev:ro
+    deploy:
+      resources:
+        limits:
+          memory: 384M
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8081/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - artagram-net
+
+  artagram-users:
+    build:
+      context: ../artagram-users
+      dockerfile: Dockerfile
+    container_name: artagram-users
+    restart: unless-stopped
+    ports:
+      - "${USERS_PORT:-8082}:8082"
+    environment:
+      SERVER_PORT: 8082
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: db_usuarios
+      DB_USER: ${POSTGRES_USER:-artagram}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-artagram}
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: ${RABBITMQ_USER:-artagram}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-artagram}
+      AUTH_JWKS_URI: http://artagram-auth:8081/.well-known/jwks.json
+      STORAGE_PROVIDER: ${STORAGE_PROVIDER:-s3}
+      S3_ENDPOINT: http://minio:9000
+      S3_PUBLIC_ENDPOINT: http://localhost:9000
+      S3_BUCKET: ${S3_BUCKET:-artagram-uploads}
+      S3_ACCESS_KEY: ${MINIO_ROOT_USER:-artagram}
+      S3_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-artagram123}
+      S3_REGION: us-east-1
+      PAYMENT_PROVIDER: ${PAYMENT_PROVIDER:-fake}
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-seed}
+      JAVA_TOOL_OPTIONS: "-Xms64m -Xmx256m -XX:+UseSerialGC -XX:MaxMetaspaceSize=128m"
+    deploy:
+      resources:
+        limits:
+          memory: 384M
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8082/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - artagram-net
+
+  artagram-feed:
+    build:
+      context: ../artagram-feed
+      dockerfile: Dockerfile
+    container_name: artagram-feed
+    restart: unless-stopped
+    ports:
+      - "${FEED_PORT:-8083}:8083"
+    environment:
+      SERVER_PORT: 8083
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: db_feed
+      DB_USER: ${POSTGRES_USER:-artagram}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-artagram}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_DATABASE: 1
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: ${RABBITMQ_USER:-artagram}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-artagram}
+      AUTH_JWKS_URI: http://artagram-auth:8081/.well-known/jwks.json
+      STORAGE_PROVIDER: ${STORAGE_PROVIDER:-s3}
+      S3_ENDPOINT: http://minio:9000
+      S3_PUBLIC_ENDPOINT: http://localhost:9000
+      S3_BUCKET: ${S3_BUCKET:-artagram-uploads}
+      S3_ACCESS_KEY: ${MINIO_ROOT_USER:-artagram}
+      S3_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-artagram123}
+      S3_REGION: us-east-1
+      APP_API_BASE_URL: http://localhost:8080
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-seed}
+      JAVA_TOOL_OPTIONS: "-Xms64m -Xmx256m -XX:+UseSerialGC -XX:MaxMetaspaceSize=128m"
+    deploy:
+      resources:
+        limits:
+          memory: 384M
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8083/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - artagram-net
+
+  artagram-lienzo:
+    build:
+      context: ../ARTAGRAM-backv1
+      dockerfile: Dockerfile
+    container_name: artagram-lienzo
+    restart: unless-stopped
+    ports:
+      - "${LIENZO_PORT:-8084}:8080"
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: ${LIENZO_DB_NAME:-artagram}
+      DB_USER: ${POSTGRES_USER:-artagram}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-artagram}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: ${RABBITMQ_USER:-artagram}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-artagram}
+      JWT_SECRET: ${JWT_SECRET:-secreto-desarrollo-minimo-32-bytes-longitud-segura-artagram}
+      MEDIA_SIGNING_SECRET: ${MEDIA_SIGNING_SECRET:-secreto-firma-media-desarrollo-32-bytes}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173}
+      APP_BASE_URL: ${APP_BASE_URL:-http://localhost:5173}
+      APP_API_BASE_URL: ${APP_API_BASE_URL:-http://localhost:8080}
+      STORAGE_PROVIDER: ${STORAGE_PROVIDER:-s3}
+      S3_ENDPOINT: http://minio:9000
+      S3_PUBLIC_ENDPOINT: http://localhost:9000
+      S3_BUCKET: ${S3_BUCKET:-artagram-uploads}
+      S3_ACCESS_KEY: ${MINIO_ROOT_USER:-artagram}
+      S3_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-artagram123}
+      S3_REGION: us-east-1
+      EMAIL_MODE: ${EMAIL_MODE:-log}
+      VERIFICACION_CORREO: ${VERIFICACION_CORREO:-false}
+      GROQ_API_KEY: ${GROQ_API_KEY:-}
+      GROQ_MODELO: ${GROQ_MODELO:-qwen/qwen3.8-27b}
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-seed}
+      JAVA_TOOL_OPTIONS: "-Xms64m -Xmx256m -XX:+UseSerialGC -XX:MaxMetaspaceSize=128m"
+    deploy:
+      resources:
+        limits:
+          memory: 384M
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - artagram-net
+
+  artagram-chat:
+    build:
+      context: ../artagram-chat
+      dockerfile: Dockerfile
+    container_name: artagram-chat
+    restart: unless-stopped
+    ports:
+      - "${CHAT_PORT:-8085}:8085"
+    environment:
+      SERVER_PORT: 8085
+      SPRING_DATA_MONGODB_URI: mongodb://${MONGO_USER:-artagram}:${MONGO_PASSWORD:-artagram}@mongodb:27017/db_chat?authSource=admin
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: ${RABBITMQ_USER:-artagram}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-artagram}
+      AUTH_JWKS_URI: http://artagram-auth:8081/.well-known/jwks.json
+      LIENZO_INTERNAL_URL: http://artagram-lienzo:8080
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-seed}
+      JAVA_TOOL_OPTIONS: "-Xms64m -Xmx256m -XX:+UseSerialGC -XX:MaxMetaspaceSize=128m"
+    deploy:
+      resources:
+        limits:
+          memory: 384M
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8085/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - artagram-net
+
+  artagram-media-worker:
+    build:
+      context: ../artagram-media-worker
+      dockerfile: Dockerfile
+    container_name: artagram-media-worker
+    restart: unless-stopped
+    ports:
+      - "${MEDIA_WORKER_PORT:-8086}:8086"
+    environment:
+      SERVER_PORT: 8086
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: ${RABBITMQ_USER:-artagram}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-artagram}
+      S3_ENDPOINT: http://minio:9000
+      S3_BUCKET: ${S3_BUCKET:-artagram-uploads}
+      S3_ACCESS_KEY: ${MINIO_ROOT_USER:-artagram}
+      S3_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-artagram123}
+      S3_REGION: us-east-1
+      JAVA_TOOL_OPTIONS: "-Xms64m -Xmx256m -XX:+UseSerialGC -XX:MaxMetaspaceSize=128m"
+    deploy:
+      resources:
+        limits:
+          memory: 384M
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8086/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - artagram-net
+
+  artagram-ai-worker:
+    build:
+      context: ../artagram-ai-worker
+      dockerfile: Dockerfile
+    container_name: artagram-ai-worker
+    restart: unless-stopped
+    ports:
+      - "${AI_WORKER_PORT:-8087}:8087"
+    environment:
+      SERVER_PORT: 8087
+      SPRING_DATA_MONGODB_URI: mongodb://${MONGO_USER:-artagram}:${MONGO_PASSWORD:-artagram}@mongodb:27017/db_ia?authSource=admin
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: ${RABBITMQ_USER:-artagram}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-artagram}
+      S3_ENDPOINT: http://minio:9000
+      S3_BUCKET: ${S3_BUCKET:-artagram-uploads}
+      S3_ACCESS_KEY: ${MINIO_ROOT_USER:-artagram}
+      S3_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-artagram123}
+      S3_REGION: us-east-1
+      LLM_PROVIDER: ${LLM_PROVIDER:-fake}
+      GROQ_API_KEY: ${GROQ_API_KEY:-}
+      GROQ_MODELO: ${GROQ_MODELO:-qwen/qwen3.8-27b}
+      JAVA_TOOL_OPTIONS: "-Xms64m -Xmx256m -XX:+UseSerialGC -XX:MaxMetaspaceSize=128m"
+    deploy:
+      resources:
+        limits:
+          memory: 384M
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8087/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - artagram-net
