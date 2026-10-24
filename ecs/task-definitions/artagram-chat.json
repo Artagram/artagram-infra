@@ -1,0 +1,70 @@
+{
+  "family": "artagram-chat",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": [
+    "FARGATE"
+  ],
+  "cpu": "256",
+  "memory": "512",
+  "executionRoleArn": "arn:aws:iam::${AWS_ACCOUNT_ID}:role/artagramEcsTaskExecutionRole",
+  "taskRoleArn": "arn:aws:iam::${AWS_ACCOUNT_ID}:role/artagramEcsTaskRole",
+  "containerDefinitions": [
+    {
+      "name": "artagram-chat",
+      "image": "${IMAGE_URI}",
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 8085,
+          "protocol": "tcp"
+        }
+      ],
+      "environment": [
+        {
+          "name": "SERVER_PORT",
+          "value": "8085"
+        },
+        {
+          "name": "SPRING_DATA_MONGODB_URI",
+          "value": "${CHAT_MONGODB_URI}"
+        },
+        {
+          "name": "SPRING_RABBITMQ_HOST",
+          "value": "${RABBITMQ_HOST}"
+        },
+        {
+          "name": "SPRING_RABBITMQ_PORT",
+          "value": "${RABBITMQ_PORT}"
+        },
+        {
+          "name": "SPRING_RABBITMQ_USERNAME",
+          "value": "${RABBITMQ_USER}"
+        },
+        {
+          "name": "SPRING_RABBITMQ_PASSWORD",
+          "value": "${RABBITMQ_PASSWORD}"
+        },
+        {
+          "name": "RABBITMQ_EXCHANGE",
+          "value": "artagram.events"
+        },
+        {
+          "name": "JWT_PUBLIC_KEY_PEM",
+          "value": "${JWT_PUBLIC_KEY_PEM}"
+        },
+        {
+          "name": "LIENZO_INTERNAL_URL",
+          "value": "http://canvas.artagram.local:8084"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/artagram-chat",
+          "awslogs-region": "${AWS_REGION}",
+          "awslogs-stream-prefix": "ecs"
+        }
+      }
+    }
+  ]
+}

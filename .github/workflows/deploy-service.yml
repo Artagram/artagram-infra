@@ -1,0 +1,140 @@
+name: Build, test and deploy a microservice to ECS Fargate
+
+# Workflow reusable: cada repo de microservicio (artagram-auth, artagram-users,
+# etc.) tiene su propio .github/workflows/ci-cd.yml que solo llama a este con
+# `uses: Artagram/artagram-infra/.github/workflows/deploy-service.yml@main`,
+# para no duplicar la misma lógica 10 veces.
+#
+# En un pull request solo corren build+test (job build-test).
+# En un push a main corren build+test y, si pasan, el deploy a ECS.
+
+on:
+  workflow_call:
+    inputs:
+      service-name:
+        description: "Nombre del servicio: debe coincidir con el repo, el repositorio ECR y la ECS task family"
+        required: true
+        type: string
+      container-port:
+        description: "Puerto que expone el contenedor (informativo, usado en logs)"
+        required: true
+        type: number
+    secrets:
+      AWS_ACCESS_KEY_ID:
+        required: true
+      AWS_SECRET_ACCESS_KEY:
+        required: true
+      AWS_ACCOUNT_ID:
+        required: true
+
+env:
+  AWS_REGION: us-east-1
+  ECS_CLUSTER: artagram-cluster
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          java-version: "21"
+          distribution: "temurin"
+          cache: maven
+
+      - name: Build y tests (mvn verify)
+        run: mvn -B verify
+
+  deploy:
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    needs: build-test
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Checkout del servicio
+        uses: actions/checkout@v4
+
+      - name: Checkout de artagram-infra (plantillas de task definition)
+        uses: actions/checkout@v4
+        with:
+          repository: Artagram/artagram-infra
+          path: infra
+
+      - name: Configurar credenciales AWS
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login en Amazon ECR
+        id: ecr-login
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build y push de la imagen Docker
+        id: build-image
+        env:
+          ECR_REGISTRY: ${{ steps.ecr-login.outputs.registry }}
+          ECR_REPOSITORY: ${{ inputs.service-name }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build -t "$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" -t "$ECR_REGISTRY/$ECR_REPOSITORY:latest" .
+          docker push "$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+          docker push "$ECR_REGISTRY/$ECR_REPOSITORY:latest"
+          echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> "$GITHUB_OUTPUT"
+
+      # Las plantillas en infra/ecs/task-definitions/<servicio>.json tienen
+      # placeholders tipo ${DB_PASSWORD}. Cada repo solo usa los que su
+      # plantilla referencia; los demás quedan sin usar, no rompen nada.
+      # Todos estos "secrets.X" vienen de GitHub (Organization secrets,
+      # ver AWS_DEPLOYMENT.md sección 5) gracias a `secrets: inherit` en el
+      # workflow que llama a este.
+      - name: Renderizar la task definition con los secretos de GitHub
+        env:
+          AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+          AWS_REGION: ${{ env.AWS_REGION }}
+          IMAGE_URI: ${{ steps.build-image.outputs.image }}
+          DB_HOST: ${{ secrets.DB_HOST }}
+          DB_PORT: ${{ secrets.DB_PORT }}
+          DB_USER: ${{ secrets.DB_USER }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          REDIS_HOST: ${{ secrets.REDIS_HOST }}
+          REDIS_PORT: ${{ secrets.REDIS_PORT }}
+          RABBITMQ_HOST: ${{ secrets.RABBITMQ_HOST }}
+          RABBITMQ_PORT: ${{ secrets.RABBITMQ_PORT }}
+          RABBITMQ_USER: ${{ secrets.RABBITMQ_USER }}
+          RABBITMQ_PASSWORD: ${{ secrets.RABBITMQ_PASSWORD }}
+          NOTIFICATIONS_RABBITMQ_USER: ${{ secrets.NOTIFICATIONS_RABBITMQ_USER }}
+          NOTIFICATIONS_RABBITMQ_PASSWORD: ${{ secrets.NOTIFICATIONS_RABBITMQ_PASSWORD }}
+          CHAT_MONGODB_URI: ${{ secrets.CHAT_MONGODB_URI }}
+          AI_MONGODB_URI: ${{ secrets.AI_MONGODB_URI }}
+          NOTIFICATIONS_MONGODB_URI: ${{ secrets.NOTIFICATIONS_MONGODB_URI }}
+          S3_BUCKET: ${{ secrets.S3_BUCKET }}
+          S3_PUBLIC_ENDPOINT: ${{ secrets.S3_PUBLIC_ENDPOINT }}
+          JWT_PUBLIC_KEY_PEM: ${{ secrets.JWT_PUBLIC_KEY_PEM }}
+          JWT_PRIVATE_KEY_PEM: ${{ secrets.JWT_PRIVATE_KEY_PEM }}
+          MP_ACCESS_TOKEN: ${{ secrets.MP_ACCESS_TOKEN }}
+          MERCADOPAGO_WEBHOOK_SECRET: ${{ secrets.MERCADOPAGO_WEBHOOK_SECRET }}
+          PAGO_PROVEEDOR: ${{ secrets.PAGO_PROVEEDOR }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          EMAIL_MODE: ${{ secrets.EMAIL_MODE }}
+          EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          GRAFANA_URL: ${{ secrets.GRAFANA_URL }}
+          PROMETHEUS_URL: ${{ secrets.PROMETHEUS_URL }}
+          CORS_ORIGINS: ${{ vars.CORS_ORIGINS }}
+          GATEWAY_PUBLIC_URL: ${{ vars.GATEWAY_PUBLIC_URL }}
+        run: |
+          envsubst < "infra/ecs/task-definitions/${{ inputs.service-name }}.json" > rendered-task-def.json
+
+      - name: Deploy a ECS (registra nueva task definition + actualiza el servicio)
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+        with:
+          task-definition: rendered-task-def.json
+          service: ${{ inputs.service-name }}
+          cluster: ${{ env.ECS_CLUSTER }}
+          wait-for-service-stability: true

@@ -1,0 +1,102 @@
+{
+  "family": "artagram-feed",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": [
+    "FARGATE"
+  ],
+  "cpu": "256",
+  "memory": "512",
+  "executionRoleArn": "arn:aws:iam::${AWS_ACCOUNT_ID}:role/artagramEcsTaskExecutionRole",
+  "taskRoleArn": "arn:aws:iam::${AWS_ACCOUNT_ID}:role/artagramEcsTaskRole",
+  "containerDefinitions": [
+    {
+      "name": "artagram-feed",
+      "image": "${IMAGE_URI}",
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 8083,
+          "protocol": "tcp"
+        }
+      ],
+      "environment": [
+        {
+          "name": "PORT",
+          "value": "8083"
+        },
+        {
+          "name": "DB_HOST",
+          "value": "${DB_HOST}"
+        },
+        {
+          "name": "DB_PORT",
+          "value": "${DB_PORT}"
+        },
+        {
+          "name": "DB_USER",
+          "value": "${DB_USER}"
+        },
+        {
+          "name": "DB_PASSWORD",
+          "value": "${DB_PASSWORD}"
+        },
+        {
+          "name": "DB_NAME",
+          "value": "db_feed"
+        },
+        {
+          "name": "RABBITMQ_HOST",
+          "value": "${RABBITMQ_HOST}"
+        },
+        {
+          "name": "RABBITMQ_PORT",
+          "value": "${RABBITMQ_PORT}"
+        },
+        {
+          "name": "RABBITMQ_USER",
+          "value": "${RABBITMQ_USER}"
+        },
+        {
+          "name": "RABBITMQ_PASSWORD",
+          "value": "${RABBITMQ_PASSWORD}"
+        },
+        {
+          "name": "REDIS_HOST",
+          "value": "${REDIS_HOST}"
+        },
+        {
+          "name": "REDIS_PORT",
+          "value": "${REDIS_PORT}"
+        },
+        {
+          "name": "JWT_PUBLIC_KEY_PEM",
+          "value": "${JWT_PUBLIC_KEY_PEM}"
+        },
+        {
+          "name": "JWKS_URL",
+          "value": "http://auth.artagram.local:8081/.well-known/jwks.json"
+        },
+        {
+          "name": "S3_BUCKET",
+          "value": "${S3_BUCKET}"
+        },
+        {
+          "name": "S3_REGION",
+          "value": "${AWS_REGION}"
+        },
+        {
+          "name": "STORAGE_TYPE",
+          "value": "s3"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/artagram-feed",
+          "awslogs-region": "${AWS_REGION}",
+          "awslogs-stream-prefix": "ecs"
+        }
+      }
+    }
+  ]
+}

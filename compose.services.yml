@@ -17,12 +17,16 @@ services:
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173}
       GATEWAY_JWT_ENABLED: ${GATEWAY_JWT_ENABLED:-false}
       AUTH_JWKS_URI: http://artagram-auth:8081/.well-known/jwks.json
-      AUTH_SERVICE_URL: ${AUTH_SERVICE_URL:-http://artagram-lienzo:8084}
-      USERS_SERVICE_URL: ${USERS_SERVICE_URL:-http://artagram-lienzo:8084}
-      FEED_SERVICE_URL: ${FEED_SERVICE_URL:-http://artagram-lienzo:8084}
-      CHAT_SERVICE_URL: ${CHAT_SERVICE_URL:-http://artagram-lienzo:8084}
-      LIENZO_SERVICE_URL: ${LIENZO_SERVICE_URL:-http://artagram-lienzo:8084}
-      LIENZO_WS_URL: ${LIENZO_WS_URL:-ws://artagram-lienzo:8084}
+      AUTH_SERVICE_URL: ${AUTH_SERVICE_URL:-http://artagram-auth:8081}
+      USERS_SERVICE_URL: ${USERS_SERVICE_URL:-http://artagram-users:8082}
+      FEED_SERVICE_URL: ${FEED_SERVICE_URL:-http://artagram-feed:8083}
+      CHAT_SERVICE_URL: ${CHAT_SERVICE_URL:-http://artagram-chat:8085}
+      # artagram-lienzo (backv1) solo le queda /api/admin/** (KPIs) — ver admin-route
+      LIENZO_SERVICE_URL: ${LIENZO_SERVICE_URL:-http://artagram-lienzo:8080}
+      CANVAS_SERVICE_URL: ${CANVAS_SERVICE_URL:-http://artagram-canvas:8088}
+      CANVAS_WS_URL: ${CANVAS_WS_URL:-ws://artagram-canvas:8088}
+      PAYMENT_SERVICE_URL: ${PAYMENT_SERVICE_URL:-http://artagram-payment:8089}
+      NOTIFICATIONS_SERVICE_URL: ${NOTIFICATIONS_SERVICE_URL:-http://artagram-notifications:8090}
       JAVA_TOOL_OPTIONS: "-Xms64m -Xmx256m -XX:+UseSerialGC -XX:MaxMetaspaceSize=128m"
     deploy:
       resources:
@@ -30,6 +34,22 @@ services:
           memory: 384M
     depends_on:
       redis:
+        condition: service_healthy
+      artagram-auth:
+        condition: service_healthy
+      artagram-users:
+        condition: service_healthy
+      artagram-feed:
+        condition: service_healthy
+      artagram-chat:
+        condition: service_healthy
+      artagram-lienzo:
+        condition: service_healthy
+      artagram-canvas:
+        condition: service_healthy
+      artagram-payment:
+        condition: service_healthy
+      artagram-notifications:
         condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:8080/actuator/health || exit 1"]
@@ -54,10 +74,19 @@ services:
       DB_NAME: db_auth
       DB_USER: ${POSTGRES_USER:-artagram}
       DB_PASSWORD: ${POSTGRES_PASSWORD:-artagram}
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/db_auth
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-artagram}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-artagram}
       RABBITMQ_HOST: rabbitmq
       RABBITMQ_PORT: 5672
       RABBITMQ_USER: ${RABBITMQ_USER:-artagram}
       RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-artagram}
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: ${RABBITMQ_USER:-artagram}
+      SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-artagram}
+      JWT_PRIVATE_KEY_PATH: /app/secrets-dev/jwt-private.pem
+      JWT_PUBLIC_KEY_PATH: /app/secrets-dev/jwt-public.pem
       EMAIL_MODE: ${EMAIL_MODE:-log}
       VERIFICACION_CORREO: ${VERIFICACION_CORREO:-false}
       APP_BASE_URL: ${APP_BASE_URL:-http://localhost:5173}
@@ -102,6 +131,7 @@ services:
       RABBITMQ_USER: ${RABBITMQ_USER:-artagram}
       RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-artagram}
       AUTH_JWKS_URI: http://artagram-auth:8081/.well-known/jwks.json
+      JWT_PUBLIC_KEY_PATH: /app/secrets-dev/jwt-public.pem
       STORAGE_PROVIDER: ${STORAGE_PROVIDER:-s3}
       S3_ENDPOINT: http://minio:9000
       S3_PUBLIC_ENDPOINT: http://localhost:9000
@@ -112,6 +142,8 @@ services:
       PAYMENT_PROVIDER: ${PAYMENT_PROVIDER:-fake}
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-seed}
       JAVA_TOOL_OPTIONS: "-Xms64m -Xmx256m -XX:+UseSerialGC -XX:MaxMetaspaceSize=128m"
+    volumes:
+      - ./secrets-dev:/app/secrets-dev:ro
     deploy:
       resources:
         limits:
@@ -154,6 +186,7 @@ services:
       RABBITMQ_USER: ${RABBITMQ_USER:-artagram}
       RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-artagram}
       AUTH_JWKS_URI: http://artagram-auth:8081/.well-known/jwks.json
+      JWT_PUBLIC_KEY_PATH: /app/secrets-dev/jwt-public.pem
       STORAGE_PROVIDER: ${STORAGE_PROVIDER:-s3}
       S3_ENDPOINT: http://minio:9000
       S3_PUBLIC_ENDPOINT: http://localhost:9000
@@ -164,6 +197,8 @@ services:
       APP_API_BASE_URL: http://localhost:8080
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-seed}
       JAVA_TOOL_OPTIONS: "-Xms64m -Xmx256m -XX:+UseSerialGC -XX:MaxMetaspaceSize=128m"
+    volumes:
+      - ./secrets-dev:/app/secrets-dev:ro
     deploy:
       resources:
         limits:
@@ -205,7 +240,15 @@ services:
       RABBITMQ_PORT: 5672
       RABBITMQ_USER: ${RABBITMQ_USER:-artagram}
       RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-artagram}
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: ${RABBITMQ_USER:-artagram}
+      SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-artagram}
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
       JWT_SECRET: ${JWT_SECRET:-secreto-desarrollo-minimo-32-bytes-longitud-segura-artagram}
+      JWT_PUBLIC_KEY_PATH: /app/secrets-dev/jwt-public.pem
+      JWT_JWKS_URI: http://artagram-auth:8081/.well-known/jwks.json
       MEDIA_SIGNING_SECRET: ${MEDIA_SIGNING_SECRET:-secreto-firma-media-desarrollo-32-bytes}
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173}
       APP_BASE_URL: ${APP_BASE_URL:-http://localhost:5173}
@@ -222,11 +265,13 @@ services:
       GROQ_API_KEY: ${GROQ_API_KEY:-}
       GROQ_MODELO: ${GROQ_MODELO:-qwen/qwen3.8-27b}
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-seed}
-      JAVA_TOOL_OPTIONS: "-Xms64m -Xmx256m -XX:+UseSerialGC -XX:MaxMetaspaceSize=128m"
+      JAVA_TOOL_OPTIONS: "-Xms128m -Xmx512m -XX:+UseSerialGC -XX:MaxMetaspaceSize=192m"
+    volumes:
+      - ./secrets-dev:/app/secrets-dev:ro
     deploy:
       resources:
         limits:
-          memory: 384M
+          memory: 896M
     depends_on:
       postgres:
         condition: service_healthy
@@ -259,10 +304,17 @@ services:
       RABBITMQ_PORT: 5672
       RABBITMQ_USER: ${RABBITMQ_USER:-artagram}
       RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-artagram}
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: ${RABBITMQ_USER:-artagram}
+      SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-artagram}
       AUTH_JWKS_URI: http://artagram-auth:8081/.well-known/jwks.json
       LIENZO_INTERNAL_URL: http://artagram-lienzo:8080
+      JWT_PUBLIC_KEY_PATH: /app/secrets-dev/jwt-public.pem
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-seed}
       JAVA_TOOL_OPTIONS: "-Xms64m -Xmx256m -XX:+UseSerialGC -XX:MaxMetaspaceSize=128m"
+    volumes:
+      - ./secrets-dev:/app/secrets-dev:ro
     deploy:
       resources:
         limits:
@@ -354,6 +406,143 @@ services:
         condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:8087/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - artagram-net
+
+  artagram-canvas:
+    build:
+      context: ../artagram-canvas
+      dockerfile: Dockerfile
+    container_name: artagram-canvas
+    restart: unless-stopped
+    ports:
+      # El gateway ya enruta /api/comunidades/**, /api/fiestas/** aqui
+      # (canvas-rest-route). /ws sigue en artagram-lienzo hasta que banner y
+      # el chat de comunidad/personal por STOMP terminen de migrarse.
+      - "${CANVAS_PORT:-8088}:8088"
+    environment:
+      SERVER_PORT: 8088
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: db_lienzo
+      DB_USER: ${POSTGRES_USER:-artagram}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-artagram}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: ${RABBITMQ_USER:-artagram}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-artagram}
+      JWT_PUBLIC_KEY_PATH: /app/secrets-dev/jwt-public.pem
+      LIENZO_INTERNAL_URL: http://artagram-lienzo:8080
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173}
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-seed}
+      JAVA_TOOL_OPTIONS: "-Xms64m -Xmx256m -XX:+UseSerialGC -XX:MaxMetaspaceSize=128m"
+    volumes:
+      - ./secrets-dev:/app/secrets-dev:ro
+    deploy:
+      resources:
+        limits:
+          memory: 384M
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      artagram-lienzo:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8088/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - artagram-net
+
+  artagram-payment:
+    build:
+      context: ../artagram-payment
+      dockerfile: Dockerfile
+    container_name: artagram-payment
+    restart: unless-stopped
+    ports:
+      - "${PAYMENT_PORT:-8089}:8089"
+    environment:
+      SERVER_PORT: 8089
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: db_payment
+      DB_USER: ${POSTGRES_USER:-artagram}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-artagram}
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: ${RABBITMQ_USER:-artagram}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-artagram}
+      JWT_PUBLIC_KEY_PATH: /app/secrets-dev/jwt-public.pem
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173}
+      PAGO_PROVEEDOR: ${PAGO_PROVEEDOR:-fake}
+      MP_ACCESS_TOKEN: ${MP_ACCESS_TOKEN:-}
+      MERCADOPAGO_WEBHOOK_SECRET: ${MERCADOPAGO_WEBHOOK_SECRET:-}
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-seed}
+      JAVA_TOOL_OPTIONS: "-Xms64m -Xmx256m -XX:+UseSerialGC -XX:MaxMetaspaceSize=128m"
+    volumes:
+      - ./secrets-dev:/app/secrets-dev:ro
+    deploy:
+      resources:
+        limits:
+          memory: 384M
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8089/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - artagram-net
+
+  artagram-notifications:
+    build:
+      context: ../artagram-notifications
+      dockerfile: Dockerfile
+    container_name: artagram-notifications
+    restart: unless-stopped
+    ports:
+      - "${NOTIFICATIONS_PORT:-8090}:8090"
+    environment:
+      SERVER_PORT: 8090
+      SPRING_DATA_MONGODB_URI: mongodb://${MONGO_USER:-artagram}:${MONGO_PASSWORD:-artagram}@mongodb:27017/db_notificaciones?authSource=admin
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: notifications
+      RABBITMQ_PASSWORD: ${NOTIFICATIONS_RABBITMQ_PASSWORD:-notifications_secret}
+      RABBITMQ_VHOST: notifications
+      JWT_PUBLIC_KEY_PATH: /app/secrets-dev/jwt-public.pem
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173}
+      EMAIL_MODE: ${EMAIL_MODE:-log}
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-seed}
+      JAVA_TOOL_OPTIONS: "-Xms64m -Xmx256m -XX:+UseSerialGC -XX:MaxMetaspaceSize=128m"
+    volumes:
+      - ./secrets-dev:/app/secrets-dev:ro
+    deploy:
+      resources:
+        limits:
+          memory: 384M
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8090/actuator/health || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 10

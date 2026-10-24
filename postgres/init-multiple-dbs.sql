@@ -22,6 +22,9 @@ WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'db_feed')\gexec
 SELECT 'CREATE DATABASE db_lienzo OWNER artagram'
 WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'db_lienzo')\gexec
 
+SELECT 'CREATE DATABASE db_payment OWNER artagram'
+WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'db_payment')\gexec
+
 GRANT ALL PRIVILEGES ON DATABASE db_auth TO artagram;
 GRANT ALL PRIVILEGES ON DATABASE db_auth TO artagram_app;
 GRANT ALL PRIVILEGES ON DATABASE db_usuarios TO artagram;
@@ -30,3 +33,5 @@ GRANT ALL PRIVILEGES ON DATABASE db_feed TO artagram;
 GRANT ALL PRIVILEGES ON DATABASE db_feed TO artagram_app;
 GRANT ALL PRIVILEGES ON DATABASE db_lienzo TO artagram;
 GRANT ALL PRIVILEGES ON DATABASE db_lienzo TO artagram_app;
+GRANT ALL PRIVILEGES ON DATABASE db_payment TO artagram;
+GRANT ALL PRIVILEGES ON DATABASE db_payment TO artagram_app;

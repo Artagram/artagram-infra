@@ -1,0 +1,22 @@
+name: DAST - OWASP ZAP full scan
+
+# No corre por cada push de cada uno de los 10 repos (un full scan de ZAP
+# toma minutos); corre manual o semanalmente contra el ambiente ya
+# desplegado en AWS. Vive en artagram-infra porque es transversal, no de
+# un microservicio en particular.
+
+on:
+  workflow_dispatch: {}
+  schedule:
+    - cron: "0 7 * * 1" # lunes 07:00 UTC
+
+jobs:
+  zap-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: ZAP full scan contra el gateway
+        uses: zaproxy/action-full-scan@v0.12.0
+        with:
+          target: "https://${{ vars.GATEWAY_PUBLIC_URL }}"
+          cmd_options: "-a"
+          fail_action: false

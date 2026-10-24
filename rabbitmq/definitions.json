@@ -3,6 +3,9 @@
   "vhosts": [
     {
       "name": "/"
+    },
+    {
+      "name": "notifications"
     }
   ],
   "exchanges": [
@@ -18,6 +21,24 @@
     {
       "name": "artagram.dlx",
       "vhost": "/",
+      "type": "topic",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    },
+    {
+      "name": "artagram.events",
+      "vhost": "notifications",
+      "type": "topic",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    },
+    {
+      "name": "artagram.dlx",
+      "vhost": "notifications",
       "type": "topic",
       "durable": true,
       "auto_delete": false,
@@ -282,6 +303,23 @@
       "arguments": {}
     },
     {
+      "name": "chat.personal.message",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-dead-letter-exchange": "artagram.dlx",
+        "x-dead-letter-routing-key": "chat.personal.message.dlq"
+      }
+    },
+    {
+      "name": "chat.personal.message.dlq",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    },
+    {
       "name": "chat.follow.created",
       "vhost": "/",
       "durable": true,
@@ -450,58 +488,854 @@
       "durable": true,
       "auto_delete": false,
       "arguments": {}
+    },
+    {
+      "name": "payment.user.registered",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-dead-letter-exchange": "artagram.dlx",
+        "x-dead-letter-routing-key": "payment.user.registered.dlq"
+      }
+    },
+    {
+      "name": "payment.user.registered.dlq",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    },
+    {
+      "name": "payment.user.deleted",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-dead-letter-exchange": "artagram.dlx",
+        "x-dead-letter-routing-key": "payment.user.deleted.dlq"
+      }
+    },
+    {
+      "name": "payment.user.deleted.dlq",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    },
+    {
+      "name": "notifications.follow.created",
+      "vhost": "notifications",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-dead-letter-exchange": "artagram.dlx",
+        "x-dead-letter-routing-key": "notifications.follow.created.dlq"
+      }
+    },
+    {
+      "name": "notifications.follow.created.dlq",
+      "vhost": "notifications",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    },
+    {
+      "name": "notifications.like.created",
+      "vhost": "notifications",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-dead-letter-exchange": "artagram.dlx",
+        "x-dead-letter-routing-key": "notifications.like.created.dlq"
+      }
+    },
+    {
+      "name": "notifications.like.created.dlq",
+      "vhost": "notifications",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    },
+    {
+      "name": "notifications.comment.created",
+      "vhost": "notifications",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-dead-letter-exchange": "artagram.dlx",
+        "x-dead-letter-routing-key": "notifications.comment.created.dlq"
+      }
+    },
+    {
+      "name": "notifications.comment.created.dlq",
+      "vhost": "notifications",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    },
+    {
+      "name": "notifications.subscription.updated",
+      "vhost": "notifications",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-dead-letter-exchange": "artagram.dlx",
+        "x-dead-letter-routing-key": "notifications.subscription.updated.dlq"
+      }
+    },
+    {
+      "name": "notifications.subscription.updated.dlq",
+      "vhost": "notifications",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    },
+    {
+      "name": "notifications.ai.completed",
+      "vhost": "notifications",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-dead-letter-exchange": "artagram.dlx",
+        "x-dead-letter-routing-key": "notifications.ai.completed.dlq"
+      }
+    },
+    {
+      "name": "notifications.ai.completed.dlq",
+      "vhost": "notifications",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    },
+    {
+      "name": "notifications.verification.requested",
+      "vhost": "notifications",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-dead-letter-exchange": "artagram.dlx",
+        "x-dead-letter-routing-key": "notifications.verification.requested.dlq"
+      }
+    },
+    {
+      "name": "notifications.verification.requested.dlq",
+      "vhost": "notifications",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    },
+    {
+      "name": "users.user.login",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-dead-letter-exchange": "artagram.dlx",
+        "x-dead-letter-routing-key": "users.user.login.dlq"
+      }
+    },
+    {
+      "name": "users.user.login.dlq",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    },
+    {
+      "name": "users.collab.session.started",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-dead-letter-exchange": "artagram.dlx",
+        "x-dead-letter-routing-key": "users.collab.session.started.dlq"
+      }
+    },
+    {
+      "name": "users.collab.session.started.dlq",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    },
+    {
+      "name": "users.collab.session.ended",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-dead-letter-exchange": "artagram.dlx",
+        "x-dead-letter-routing-key": "users.collab.session.ended.dlq"
+      }
+    },
+    {
+      "name": "users.collab.session.ended.dlq",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    },
+    {
+      "name": "users.subscription.updated",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-dead-letter-exchange": "artagram.dlx",
+        "x-dead-letter-routing-key": "users.subscription.updated.dlq"
+      }
+    },
+    {
+      "name": "users.subscription.updated.dlq",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
     }
   ],
   "bindings": [
-    {"source": "artagram.events", "vhost": "/", "destination": "users.user.registered", "destination_type": "queue", "routing_key": "user.registered", "arguments": {}},
-    {"source": "artagram.dlx", "vhost": "/", "destination": "users.user.registered.dlq", "destination_type": "queue", "routing_key": "users.user.registered.dlq", "arguments": {}},
-    {"source": "artagram.events", "vhost": "/", "destination": "users.user.deleted", "destination_type": "queue", "routing_key": "user.deleted", "arguments": {}},
-    {"source": "artagram.dlx", "vhost": "/", "destination": "users.user.deleted.dlq", "destination_type": "queue", "routing_key": "users.user.deleted.dlq", "arguments": {}},
-    {"source": "artagram.events", "vhost": "/", "destination": "feed.user.registered", "destination_type": "queue", "routing_key": "user.registered", "arguments": {}},
-    {"source": "artagram.dlx", "vhost": "/", "destination": "feed.user.registered.dlq", "destination_type": "queue", "routing_key": "feed.user.registered.dlq", "arguments": {}},
-    {"source": "artagram.events", "vhost": "/", "destination": "feed.user.deleted", "destination_type": "queue", "routing_key": "user.deleted", "arguments": {}},
-    {"source": "artagram.dlx", "vhost": "/", "destination": "feed.user.deleted.dlq", "destination_type": "queue", "routing_key": "feed.user.deleted.dlq", "arguments": {}},
-    {"source": "artagram.events", "vhost": "/", "destination": "feed.follow.created", "destination_type": "queue", "routing_key": "follow.created", "arguments": {}},
-    {"source": "artagram.dlx", "vhost": "/", "destination": "feed.follow.created.dlq", "destination_type": "queue", "routing_key": "feed.follow.created.dlq", "arguments": {}},
-    {"source": "artagram.events", "vhost": "/", "destination": "feed.follow.deleted", "destination_type": "queue", "routing_key": "follow.deleted", "arguments": {}},
-    {"source": "artagram.dlx", "vhost": "/", "destination": "feed.follow.deleted.dlq", "destination_type": "queue", "routing_key": "feed.follow.deleted.dlq", "arguments": {}},
-    {"source": "artagram.events", "vhost": "/", "destination": "feed.media.processed", "destination_type": "queue", "routing_key": "media.processed", "arguments": {}},
-    {"source": "artagram.dlx", "vhost": "/", "destination": "feed.media.processed.dlq", "destination_type": "queue", "routing_key": "feed.media.processed.dlq", "arguments": {}},
-    {"source": "artagram.events", "vhost": "/", "destination": "feed.canvas.closed", "destination_type": "queue", "routing_key": "canvas.closed", "arguments": {}},
-    {"source": "artagram.dlx", "vhost": "/", "destination": "feed.canvas.closed.dlq", "destination_type": "queue", "routing_key": "feed.canvas.closed.dlq", "arguments": {}},
-    {"source": "artagram.events", "vhost": "/", "destination": "feed.ai.completed", "destination_type": "queue", "routing_key": "ai.completed", "arguments": {}},
-    {"source": "artagram.dlx", "vhost": "/", "destination": "feed.ai.completed.dlq", "destination_type": "queue", "routing_key": "feed.ai.completed.dlq", "arguments": {}},
-    {"source": "artagram.events", "vhost": "/", "destination": "lienzo.user.registered", "destination_type": "queue", "routing_key": "user.registered", "arguments": {}},
-    {"source": "artagram.dlx", "vhost": "/", "destination": "lienzo.user.registered.dlq", "destination_type": "queue", "routing_key": "lienzo.user.registered.dlq", "arguments": {}},
-    {"source": "artagram.events", "vhost": "/", "destination": "lienzo.user.deleted", "destination_type": "queue", "routing_key": "user.deleted", "arguments": {}},
-    {"source": "artagram.dlx", "vhost": "/", "destination": "lienzo.user.deleted.dlq", "destination_type": "queue", "routing_key": "lienzo.user.deleted.dlq", "arguments": {}},
-    {"source": "artagram.events", "vhost": "/", "destination": "lienzo.like.updated", "destination_type": "queue", "routing_key": "like.updated", "arguments": {}},
-    {"source": "artagram.dlx", "vhost": "/", "destination": "lienzo.like.updated.dlq", "destination_type": "queue", "routing_key": "lienzo.like.updated.dlq", "arguments": {}},
-    {"source": "artagram.events", "vhost": "/", "destination": "lienzo.comment.created", "destination_type": "queue", "routing_key": "comment.created", "arguments": {}},
-    {"source": "artagram.dlx", "vhost": "/", "destination": "lienzo.comment.created.dlq", "destination_type": "queue", "routing_key": "lienzo.comment.created.dlq", "arguments": {}},
-    {"source": "artagram.events", "vhost": "/", "destination": "lienzo.comment.deleted", "destination_type": "queue", "routing_key": "comment.deleted", "arguments": {}},
-    {"source": "artagram.dlx", "vhost": "/", "destination": "lienzo.comment.deleted.dlq", "destination_type": "queue", "routing_key": "lienzo.comment.deleted.dlq", "arguments": {}},
-    {"source": "artagram.events", "vhost": "/", "destination": "chat.room.message", "destination_type": "queue", "routing_key": "room.message", "arguments": {}},
-    {"source": "artagram.dlx", "vhost": "/", "destination": "chat.room.message.dlq", "destination_type": "queue", "routing_key": "chat.room.message.dlq", "arguments": {}},
-    {"source": "artagram.events", "vhost": "/", "destination": "chat.follow.created", "destination_type": "queue", "routing_key": "follow.created", "arguments": {}},
-    {"source": "artagram.dlx", "vhost": "/", "destination": "chat.follow.created.dlq", "destination_type": "queue", "routing_key": "chat.follow.created.dlq", "arguments": {}},
-    {"source": "artagram.events", "vhost": "/", "destination": "chat.like.created", "destination_type": "queue", "routing_key": "like.created", "arguments": {}},
-    {"source": "artagram.dlx", "vhost": "/", "destination": "chat.like.created.dlq", "destination_type": "queue", "routing_key": "chat.like.created.dlq", "arguments": {}},
-    {"source": "artagram.events", "vhost": "/", "destination": "chat.comment.created", "destination_type": "queue", "routing_key": "comment.created", "arguments": {}},
-    {"source": "artagram.dlx", "vhost": "/", "destination": "chat.comment.created.dlq", "destination_type": "queue", "routing_key": "chat.comment.created.dlq", "arguments": {}},
-    {"source": "artagram.events", "vhost": "/", "destination": "chat.subscription.updated", "destination_type": "queue", "routing_key": "subscription.updated", "arguments": {}},
-    {"source": "artagram.dlx", "vhost": "/", "destination": "chat.subscription.updated.dlq", "destination_type": "queue", "routing_key": "chat.subscription.updated.dlq", "arguments": {}},
-    {"source": "artagram.events", "vhost": "/", "destination": "chat.ai.completed", "destination_type": "queue", "routing_key": "ai.completed", "arguments": {}},
-    {"source": "artagram.dlx", "vhost": "/", "destination": "chat.ai.completed.dlq", "destination_type": "queue", "routing_key": "chat.ai.completed.dlq", "arguments": {}},
-    {"source": "artagram.events", "vhost": "/", "destination": "chat.user.deleted", "destination_type": "queue", "routing_key": "user.deleted", "arguments": {}},
-    {"source": "artagram.dlx", "vhost": "/", "destination": "chat.user.deleted.dlq", "destination_type": "queue", "routing_key": "chat.user.deleted.dlq", "arguments": {}},
-    {"source": "artagram.events", "vhost": "/", "destination": "media.post.published", "destination_type": "queue", "routing_key": "post.published", "arguments": {}},
-    {"source": "artagram.dlx", "vhost": "/", "destination": "media.post.published.dlq", "destination_type": "queue", "routing_key": "media.post.published.dlq", "arguments": {}},
-    {"source": "artagram.events", "vhost": "/", "destination": "ai.ai.analyze", "destination_type": "queue", "routing_key": "ai.analyze", "arguments": {}},
-    {"source": "artagram.dlx", "vhost": "/", "destination": "ai.ai.analyze.dlq", "destination_type": "queue", "routing_key": "ai.ai.analyze.dlq", "arguments": {}},
-    {"source": "artagram.events", "vhost": "/", "destination": "auth.subscription.updated", "destination_type": "queue", "routing_key": "subscription.updated", "arguments": {}},
-    {"source": "artagram.dlx", "vhost": "/", "destination": "auth.subscription.updated.dlq", "destination_type": "queue", "routing_key": "auth.subscription.updated.dlq", "arguments": {}},
-    {"source": "artagram.events", "vhost": "/", "destination": "lienzo.subscription.updated", "destination_type": "queue", "routing_key": "subscription.updated", "arguments": {}},
-    {"source": "artagram.dlx", "vhost": "/", "destination": "lienzo.subscription.updated.dlq", "destination_type": "queue", "routing_key": "lienzo.subscription.updated.dlq", "arguments": {}}
+    {
+      "source": "artagram.events",
+      "vhost": "/",
+      "destination": "users.user.registered",
+      "destination_type": "queue",
+      "routing_key": "user.registered",
+      "arguments": {}
+    },
+    {
+      "source": "artagram.dlx",
+      "vhost": "/",
+      "destination": "users.user.registered.dlq",
+      "destination_type": "queue",
+      "routing_key": "users.user.registered.dlq",
+      "arguments": {}
+    },
+    {
+      "source": "artagram.events",
+      "vhost": "/",
+      "destination": "users.user.deleted",
+      "destination_type": "queue",
+      "routing_key": "user.deleted",
+      "arguments": {}
+    },
+    {
+      "source": "artagram.dlx",
+      "vhost": "/",
+      "destination": "users.user.deleted.dlq",
+      "destination_type": "queue",
+      "routing_key": "users.user.deleted.dlq",
+      "arguments": {}
+    },
+    {
+      "source": "artagram.events",
+      "vhost": "/",
+      "destination": "feed.user.registered",
+      "destination_type": "queue",
+      "routing_key": "user.registered",
+      "arguments": {}
+    },
+    {
+      "source": "artagram.dlx",
+      "vhost": "/",
+      "destination": "feed.user.registered.dlq",
+      "destination_type": "queue",
+      "routing_key": "feed.user.registered.dlq",
+      "arguments": {}
+    },
+    {
+      "source": "artagram.events",
+      "vhost": "/",
+      "destination": "feed.user.deleted",
+      "destination_type": "queue",
+      "routing_key": "user.deleted",
+      "arguments": {}
+    },
+    {
+      "source": "artagram.dlx",
+      "vhost": "/",
+      "destination": "feed.user.deleted.dlq",
+      "destination_type": "queue",
+      "routing_key": "feed.user.deleted.dlq",
+      "arguments": {}
+    },
+    {
+      "source": "artagram.events",
+      "vhost": "/",
+      "destination": "feed.follow.created",
+      "destination_type": "queue",
+      "routing_key": "follow.created",
+      "arguments": {}
+    },
+    {
+      "source": "artagram.dlx",
+      "vhost": "/",
+      "destination": "feed.follow.created.dlq",
+      "destination_type": "queue",
+      "routing_key": "feed.follow.created.dlq",
+      "arguments": {}
+    },
+    {
+      "source": "artagram.events",
+      "vhost": "/",
+      "destination": "feed.follow.deleted",
+      "destination_type": "queue",
+      "routing_key": "follow.deleted",
+      "arguments": {}
+    },
+    {
+      "source": "artagram.dlx",
+      "vhost": "/",
+      "destination": "feed.follow.deleted.dlq",
+      "destination_type": "queue",
+      "routing_key": "feed.follow.deleted.dlq",
+      "arguments": {}
+    },
+    {
+      "source": "artagram.events",
+      "vhost": "/",
+      "destination": "feed.media.processed",
+      "destination_type": "queue",
+      "routing_key": "media.processed",
+      "arguments": {}
+    },
+    {
+      "source": "artagram.dlx",
+      "vhost": "/",
+      "destination": "feed.media.processed.dlq",
+      "destination_type": "queue",
+      "routing_key": "feed.media.processed.dlq",
+      "arguments": {}
+    },
+    {
+      "source": "artagram.events",
+      "vhost": "/",
+      "destination": "feed.canvas.closed",
+      "destination_type": "queue",
+      "routing_key": "canvas.closed",
+      "arguments": {}
+    },
+    {
+      "source": "artagram.dlx",
+      "vhost": "/",
+      "destination": "feed.canvas.closed.dlq",
+      "destination_type": "queue",
+      "routing_key": "feed.canvas.closed.dlq",
+      "arguments": {}
+    },
+    {
+      "source": "artagram.events",
+      "vhost": "/",
+      "destination": "feed.ai.completed",
+      "destination_type": "queue",
+      "routing_key": "ai.completed",
+      "arguments": {}
+    },
+    {
+      "source": "artagram.dlx",
+      "vhost": "/",
+      "destination": "feed.ai.completed.dlq",
+      "destination_type": "queue",
+      "routing_key": "feed.ai.completed.dlq",
+      "arguments": {}
+    },
+    {
+      "source": "artagram.events",
+      "vhost": "/",
+      "destination": "lienzo.user.registered",
+      "destination_type": "queue",
+      "routing_key": "user.registered",
+      "arguments": {}
+    },
+    {
+      "source": "artagram.dlx",
+      "vhost": "/",
+      "destination": "lienzo.user.registered.dlq",
+      "destination_type": "queue",
+      "routing_key": "lienzo.user.registered.dlq",
+      "arguments": {}
+    },
+    {
+      "source": "artagram.events",
+      "vhost": "/",
+      "destination": "lienzo.user.deleted",
+      "destination_type": "queue",
+      "routing_key": "user.deleted",
+      "arguments": {}
+    },
+    {
+      "source": "artagram.dlx",
+      "vhost": "/",
+      "destination": "lienzo.user.deleted.dlq",
+      "destination_type": "queue",
+      "routing_key": "lienzo.user.deleted.dlq",
+      "arguments": {}
+    },
+    {
+      "source": "artagram.events",
+      "vhost": "/",
+      "destination": "lienzo.like.updated",
+      "destination_type": "queue",
+      "routing_key": "like.updated",
+      "arguments": {}
+    },
+    {
+      "source": "artagram.dlx",
+      "vhost": "/",
+      "destination": "lienzo.like.updated.dlq",
+      "destination_type": "queue",
+      "routing_key": "lienzo.like.updated.dlq",
+      "arguments": {}
+    },
+    {
+      "source": "artagram.events",
+      "vhost": "/",
+      "destination": "lienzo.comment.created",
+      "destination_type": "queue",
+      "routing_key": "comment.created",
+      "arguments": {}
+    },
+    {
+      "source": "artagram.dlx",
+      "vhost": "/",
+      "destination": "lienzo.comment.created.dlq",
+      "destination_type": "queue",
+      "routing_key": "lienzo.comment.created.dlq",
+      "arguments": {}
+    },
+    {
+      "source": "artagram.events",
+      "vhost": "/",
+      "destination": "lienzo.comment.deleted",
+      "destination_type": "queue",
+      "routing_key": "comment.deleted",
+      "arguments": {}
+    },
+    {
+      "source": "artagram.dlx",
+      "vhost": "/",
+      "destination": "lienzo.comment.deleted.dlq",
+      "destination_type": "queue",
+      "routing_key": "lienzo.comment.deleted.dlq",
+      "arguments": {}
+    },
+    {
+      "source": "artagram.events",
+      "vhost": "/",
+      "destination": "chat.room.message",
+      "destination_type": "queue",
+      "routing_key": "room.message",
+      "arguments": {}
+    },
+    {
+      "source": "artagram.dlx",
+      "vhost": "/",
+      "destination": "chat.room.message.dlq",
+      "destination_type": "queue",
+      "routing_key": "chat.room.message.dlq",
+      "arguments": {}
+    },
+    {
+      "source": "artagram.events",
+      "vhost": "/",
+      "destination": "chat.personal.message",
+      "destination_type": "queue",
+      "routing_key": "personal.message.sent",
+      "arguments": {}
+    },
+    {
+      "source": "artagram.dlx",
+      "vhost": "/",
+      "destination": "chat.personal.message.dlq",
+      "destination_type": "queue",
+      "routing_key": "chat.personal.message.dlq",
+      "arguments": {}
+    },
+    {
+      "source": "artagram.events",
+      "vhost": "/",
+      "destination": "chat.follow.created",
+      "destination_type": "queue",
+      "routing_key": "follow.created",
+      "arguments": {}
+    },
+    {
+      "source": "artagram.dlx",
+      "vhost": "/",
+      "destination": "chat.follow.created.dlq",
+      "destination_type": "queue",
+      "routing_key": "chat.follow.created.dlq",
+      "arguments": {}
+    },
+    {
+      "source": "artagram.events",
+      "vhost": "/",
+      "destination": "chat.like.created",
+      "destination_type": "queue",
+      "routing_key": "like.created",
+      "arguments": {}
+    },
+    {
+      "source": "artagram.dlx",
+      "vhost": "/",
+      "destination": "chat.like.created.dlq",
+      "destination_type": "queue",
+      "routing_key": "chat.like.created.dlq",
+      "arguments": {}
+    },
+    {
+      "source": "artagram.events",
+      "vhost": "/",
+      "destination": "chat.comment.created",
+      "destination_type": "queue",
+      "routing_key": "comment.created",
+      "arguments": {}
+    },
+    {
+      "source": "artagram.dlx",
+      "vhost": "/",
+      "destination": "chat.comment.created.dlq",
+      "destination_type": "queue",
+      "routing_key": "chat.comment.created.dlq",
+      "arguments": {}
+    },
+    {
+      "source": "artagram.events",
+      "vhost": "/",
+      "destination": "chat.subscription.updated",
+      "destination_type": "queue",
+      "routing_key": "subscription.updated",
+      "arguments": {}
+    },
+    {
+      "source": "artagram.dlx",
+      "vhost": "/",
+      "destination": "chat.subscription.updated.dlq",
+      "destination_type": "queue",
+      "routing_key": "chat.subscription.updated.dlq",
+      "arguments": {}
+    },
+    {
+      "source": "artagram.events",
+      "vhost": "/",
+      "destination": "chat.ai.completed",
+      "destination_type": "queue",
+      "routing_key": "ai.completed",
+      "arguments": {}
+    },
+    {
+      "source": "artagram.dlx",
+      "vhost": "/",
+      "destination": "chat.ai.completed.dlq",
+      "destination_type": "queue",
+      "routing_key": "chat.ai.completed.dlq",
+      "arguments": {}
+    },
+    {
+      "source": "artagram.events",
+      "vhost": "/",
+      "destination": "chat.user.deleted",
+      "destination_type": "queue",
+      "routing_key": "user.deleted",
+      "arguments": {}
+    },
+    {
+      "source": "artagram.dlx",
+      "vhost": "/",
+      "destination": "chat.user.deleted.dlq",
+      "destination_type": "queue",
+      "routing_key": "chat.user.deleted.dlq",
+      "arguments": {}
+    },
+    {
+      "source": "artagram.events",
+      "vhost": "/",
+      "destination": "media.post.published",
+      "destination_type": "queue",
+      "routing_key": "post.published",
+      "arguments": {}
+    },
+    {
+      "source": "artagram.dlx",
+      "vhost": "/",
+      "destination": "media.post.published.dlq",
+      "destination_type": "queue",
+      "routing_key": "media.post.published.dlq",
+      "arguments": {}
+    },
+    {
+      "source": "artagram.events",
+      "vhost": "/",
+      "destination": "ai.ai.analyze",
+      "destination_type": "queue",
+      "routing_key": "ai.analyze",
+      "arguments": {}
+    },
+    {
+      "source": "artagram.dlx",
+      "vhost": "/",
+      "destination": "ai.ai.analyze.dlq",
+      "destination_type": "queue",
+      "routing_key": "ai.ai.analyze.dlq",
+      "arguments": {}
+    },
+    {
+      "source": "artagram.events",
+      "vhost": "/",
+      "destination": "auth.subscription.updated",
+      "destination_type": "queue",
+      "routing_key": "subscription.updated",
+      "arguments": {}
+    },
+    {
+      "source": "artagram.dlx",
+      "vhost": "/",
+      "destination": "auth.subscription.updated.dlq",
+      "destination_type": "queue",
+      "routing_key": "auth.subscription.updated.dlq",
+      "arguments": {}
+    },
+    {
+      "source": "artagram.events",
+      "vhost": "/",
+      "destination": "lienzo.subscription.updated",
+      "destination_type": "queue",
+      "routing_key": "subscription.updated",
+      "arguments": {}
+    },
+    {
+      "source": "artagram.dlx",
+      "vhost": "/",
+      "destination": "lienzo.subscription.updated.dlq",
+      "destination_type": "queue",
+      "routing_key": "lienzo.subscription.updated.dlq",
+      "arguments": {}
+    },
+    {
+      "source": "artagram.events",
+      "vhost": "/",
+      "destination": "payment.user.registered",
+      "destination_type": "queue",
+      "routing_key": "user.registered",
+      "arguments": {}
+    },
+    {
+      "source": "artagram.dlx",
+      "vhost": "/",
+      "destination": "payment.user.registered.dlq",
+      "destination_type": "queue",
+      "routing_key": "payment.user.registered.dlq",
+      "arguments": {}
+    },
+    {
+      "source": "artagram.events",
+      "vhost": "/",
+      "destination": "payment.user.deleted",
+      "destination_type": "queue",
+      "routing_key": "user.deleted",
+      "arguments": {}
+    },
+    {
+      "source": "artagram.dlx",
+      "vhost": "/",
+      "destination": "payment.user.deleted.dlq",
+      "destination_type": "queue",
+      "routing_key": "payment.user.deleted.dlq",
+      "arguments": {}
+    },
+    {
+      "source": "artagram.events",
+      "vhost": "notifications",
+      "destination": "notifications.follow.created",
+      "destination_type": "queue",
+      "routing_key": "follow.created",
+      "arguments": {}
+    },
+    {
+      "source": "artagram.dlx",
+      "vhost": "notifications",
+      "destination": "notifications.follow.created.dlq",
+      "destination_type": "queue",
+      "routing_key": "notifications.follow.created.dlq",
+      "arguments": {}
+    },
+    {
+      "source": "artagram.events",
+      "vhost": "notifications",
+      "destination": "notifications.like.created",
+      "destination_type": "queue",
+      "routing_key": "like.created",
+      "arguments": {}
+    },
+    {
+      "source": "artagram.dlx",
+      "vhost": "notifications",
+      "destination": "notifications.like.created.dlq",
+      "destination_type": "queue",
+      "routing_key": "notifications.like.created.dlq",
+      "arguments": {}
+    },
+    {
+      "source": "artagram.events",
+      "vhost": "notifications",
+      "destination": "notifications.comment.created",
+      "destination_type": "queue",
+      "routing_key": "comment.created",
+      "arguments": {}
+    },
+    {
+      "source": "artagram.dlx",
+      "vhost": "notifications",
+      "destination": "notifications.comment.created.dlq",
+      "destination_type": "queue",
+      "routing_key": "notifications.comment.created.dlq",
+      "arguments": {}
+    },
+    {
+      "source": "artagram.events",
+      "vhost": "notifications",
+      "destination": "notifications.subscription.updated",
+      "destination_type": "queue",
+      "routing_key": "subscription.updated",
+      "arguments": {}
+    },
+    {
+      "source": "artagram.dlx",
+      "vhost": "notifications",
+      "destination": "notifications.subscription.updated.dlq",
+      "destination_type": "queue",
+      "routing_key": "notifications.subscription.updated.dlq",
+      "arguments": {}
+    },
+    {
+      "source": "artagram.events",
+      "vhost": "notifications",
+      "destination": "notifications.ai.completed",
+      "destination_type": "queue",
+      "routing_key": "ai.completed",
+      "arguments": {}
+    },
+    {
+      "source": "artagram.dlx",
+      "vhost": "notifications",
+      "destination": "notifications.ai.completed.dlq",
+      "destination_type": "queue",
+      "routing_key": "notifications.ai.completed.dlq",
+      "arguments": {}
+    },
+    {
+      "source": "artagram.events",
+      "vhost": "notifications",
+      "destination": "notifications.verification.requested",
+      "destination_type": "queue",
+      "routing_key": "user.verification.requested",
+      "arguments": {}
+    },
+    {
+      "source": "artagram.dlx",
+      "vhost": "notifications",
+      "destination": "notifications.verification.requested.dlq",
+      "destination_type": "queue",
+      "routing_key": "notifications.verification.requested.dlq",
+      "arguments": {}
+    },
+    {
+      "source": "artagram.events",
+      "vhost": "/",
+      "destination": "users.user.login",
+      "destination_type": "queue",
+      "routing_key": "user.login",
+      "arguments": {}
+    },
+    {
+      "source": "artagram.dlx",
+      "vhost": "/",
+      "destination": "users.user.login.dlq",
+      "destination_type": "queue",
+      "routing_key": "users.user.login.dlq",
+      "arguments": {}
+    },
+    {
+      "source": "artagram.events",
+      "vhost": "/",
+      "destination": "users.collab.session.started",
+      "destination_type": "queue",
+      "routing_key": "collab.session.started",
+      "arguments": {}
+    },
+    {
+      "source": "artagram.dlx",
+      "vhost": "/",
+      "destination": "users.collab.session.started.dlq",
+      "destination_type": "queue",
+      "routing_key": "users.collab.session.started.dlq",
+      "arguments": {}
+    },
+    {
+      "source": "artagram.events",
+      "vhost": "/",
+      "destination": "users.collab.session.ended",
+      "destination_type": "queue",
+      "routing_key": "collab.session.ended",
+      "arguments": {}
+    },
+    {
+      "source": "artagram.dlx",
+      "vhost": "/",
+      "destination": "users.collab.session.ended.dlq",
+      "destination_type": "queue",
+      "routing_key": "users.collab.session.ended.dlq",
+      "arguments": {}
+    },
+    {
+      "source": "artagram.events",
+      "vhost": "/",
+      "destination": "users.subscription.updated",
+      "destination_type": "queue",
+      "routing_key": "subscription.updated",
+      "arguments": {}
+    },
+    {
+      "source": "artagram.dlx",
+      "vhost": "/",
+      "destination": "users.subscription.updated.dlq",
+      "destination_type": "queue",
+      "routing_key": "users.subscription.updated.dlq",
+      "arguments": {}
+    }
+  ],
+  "users": [
+    {
+      "name": "notifications",
+      "password": "notifications_secret",
+      "tags": ""
+    }
+  ],
+  "permissions": [
+    {
+      "user": "notifications",
+      "vhost": "notifications",
+      "configure": ".*",
+      "write": ".*",
+      "read": ".*"
+    }
+  ],
+  "parameters": [
+    {
+      "component": "shovel",
+      "vhost": "/",
+      "name": "bridge-events-to-notifications",
+      "value": {
+        "src-protocol": "amqp091",
+        "src-uri": "amqp://artagram:artagram@localhost/%2f",
+        "src-exchange": "artagram.events",
+        "src-exchange-key": "#",
+        "dest-protocol": "amqp091",
+        "dest-uri": "amqp://artagram:artagram@localhost/notifications",
+        "dest-exchange": "artagram.events",
+        "add-forward-headers": true,
+        "ack-mode": "on-confirm"
+      }
+    }
   ]
 }

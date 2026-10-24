@@ -1,0 +1,78 @@
+{
+  "family": "artagram-ai-worker",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": [
+    "FARGATE"
+  ],
+  "cpu": "512",
+  "memory": "1024",
+  "executionRoleArn": "arn:aws:iam::${AWS_ACCOUNT_ID}:role/artagramEcsTaskExecutionRole",
+  "taskRoleArn": "arn:aws:iam::${AWS_ACCOUNT_ID}:role/artagramEcsTaskRole",
+  "containerDefinitions": [
+    {
+      "name": "artagram-ai-worker",
+      "image": "${IMAGE_URI}",
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 8087,
+          "protocol": "tcp"
+        }
+      ],
+      "environment": [
+        {
+          "name": "PORT",
+          "value": "8087"
+        },
+        {
+          "name": "RABBITMQ_HOST",
+          "value": "${RABBITMQ_HOST}"
+        },
+        {
+          "name": "RABBITMQ_PORT",
+          "value": "${RABBITMQ_PORT}"
+        },
+        {
+          "name": "RABBITMQ_USER",
+          "value": "${RABBITMQ_USER}"
+        },
+        {
+          "name": "RABBITMQ_PASSWORD",
+          "value": "${RABBITMQ_PASSWORD}"
+        },
+        {
+          "name": "S3_BUCKET",
+          "value": "${S3_BUCKET}"
+        },
+        {
+          "name": "S3_REGION",
+          "value": "${AWS_REGION}"
+        },
+        {
+          "name": "STORAGE_TYPE",
+          "value": "s3"
+        },
+        {
+          "name": "MONGODB_URI",
+          "value": "${AI_MONGODB_URI}"
+        },
+        {
+          "name": "GROQ_API_KEY",
+          "value": "${GROQ_API_KEY}"
+        },
+        {
+          "name": "GROQ_MODEL",
+          "value": "llama-3.3-70b-versatile"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/artagram-ai-worker",
+          "awslogs-region": "${AWS_REGION}",
+          "awslogs-stream-prefix": "ecs"
+        }
+      }
+    }
+  ]
+}

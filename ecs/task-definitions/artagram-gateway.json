@@ -1,0 +1,82 @@
+{
+  "family": "artagram-gateway",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": [
+    "FARGATE"
+  ],
+  "cpu": "512",
+  "memory": "1024",
+  "executionRoleArn": "arn:aws:iam::${AWS_ACCOUNT_ID}:role/artagramEcsTaskExecutionRole",
+  "taskRoleArn": "arn:aws:iam::${AWS_ACCOUNT_ID}:role/artagramEcsTaskRole",
+  "containerDefinitions": [
+    {
+      "name": "artagram-gateway",
+      "image": "${IMAGE_URI}",
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 8080,
+          "protocol": "tcp"
+        }
+      ],
+      "environment": [
+        {
+          "name": "SERVER_PORT",
+          "value": "8080"
+        },
+        {
+          "name": "AUTH_SERVICE_URL",
+          "value": "http://auth.artagram.local:8081"
+        },
+        {
+          "name": "AUTH_JWKS_URI",
+          "value": "http://auth.artagram.local:8081/.well-known/jwks.json"
+        },
+        {
+          "name": "USERS_SERVICE_URL",
+          "value": "http://users.artagram.local:8082"
+        },
+        {
+          "name": "FEED_SERVICE_URL",
+          "value": "http://feed.artagram.local:8083"
+        },
+        {
+          "name": "CHAT_SERVICE_URL",
+          "value": "http://chat.artagram.local:8085"
+        },
+        {
+          "name": "CANVAS_SERVICE_URL",
+          "value": "http://canvas.artagram.local:8084"
+        },
+        {
+          "name": "CANVAS_WS_URL",
+          "value": "ws://canvas.artagram.local:8084"
+        },
+        {
+          "name": "PAYMENT_SERVICE_URL",
+          "value": "http://payment.artagram.local:8089"
+        },
+        {
+          "name": "NOTIFICATIONS_SERVICE_URL",
+          "value": "http://notifications.artagram.local:8090"
+        },
+        {
+          "name": "GATEWAY_JWT_ENABLED",
+          "value": "true"
+        },
+        {
+          "name": "CORS_ORIGINS",
+          "value": "${CORS_ORIGINS}"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/artagram-gateway",
+          "awslogs-region": "${AWS_REGION}",
+          "awslogs-stream-prefix": "ecs"
+        }
+      }
+    }
+  ]
+}

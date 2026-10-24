@@ -1,0 +1,122 @@
+{
+  "family": "artagram-auth",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": [
+    "FARGATE"
+  ],
+  "cpu": "256",
+  "memory": "512",
+  "executionRoleArn": "arn:aws:iam::${AWS_ACCOUNT_ID}:role/artagramEcsTaskExecutionRole",
+  "taskRoleArn": "arn:aws:iam::${AWS_ACCOUNT_ID}:role/artagramEcsTaskRole",
+  "containerDefinitions": [
+    {
+      "name": "artagram-auth",
+      "image": "${IMAGE_URI}",
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 8081,
+          "protocol": "tcp"
+        }
+      ],
+      "environment": [
+        {
+          "name": "SERVER_PORT",
+          "value": "8081"
+        },
+        {
+          "name": "SPRING_DATASOURCE_URL",
+          "value": "jdbc:postgresql://${DB_HOST}:${DB_PORT}/db_auth"
+        },
+        {
+          "name": "SPRING_DATASOURCE_USERNAME",
+          "value": "${DB_USER}"
+        },
+        {
+          "name": "SPRING_DATASOURCE_PASSWORD",
+          "value": "${DB_PASSWORD}"
+        },
+        {
+          "name": "SPRING_RABBITMQ_HOST",
+          "value": "${RABBITMQ_HOST}"
+        },
+        {
+          "name": "SPRING_RABBITMQ_PORT",
+          "value": "${RABBITMQ_PORT}"
+        },
+        {
+          "name": "SPRING_RABBITMQ_USERNAME",
+          "value": "${RABBITMQ_USER}"
+        },
+        {
+          "name": "SPRING_RABBITMQ_PASSWORD",
+          "value": "${RABBITMQ_PASSWORD}"
+        },
+        {
+          "name": "RABBITMQ_EXCHANGE",
+          "value": "artagram.events"
+        },
+        {
+          "name": "JWT_PRIVATE_KEY_PEM",
+          "value": "${JWT_PRIVATE_KEY_PEM}"
+        },
+        {
+          "name": "JWT_PUBLIC_KEY_PEM",
+          "value": "${JWT_PUBLIC_KEY_PEM}"
+        },
+        {
+          "name": "JWT_ISSUER",
+          "value": "artagram-auth"
+        },
+        {
+          "name": "JWT_KEY_ID",
+          "value": "artagram-key-1"
+        },
+        {
+          "name": "JWT_ACCESS_MINUTES",
+          "value": "60"
+        },
+        {
+          "name": "EMAIL_MODE",
+          "value": "${EMAIL_MODE}"
+        },
+        {
+          "name": "EMAIL_FROM",
+          "value": "${EMAIL_FROM}"
+        },
+        {
+          "name": "EMAIL_VERIFICACION_REQUERIDA",
+          "value": "false"
+        },
+        {
+          "name": "EMAIL_VERIFY_URL",
+          "value": "https://${GATEWAY_PUBLIC_URL}/verificar"
+        },
+        {
+          "name": "SMTP_HOST",
+          "value": "${SMTP_HOST}"
+        },
+        {
+          "name": "SMTP_PORT",
+          "value": "${SMTP_PORT}"
+        },
+        {
+          "name": "SMTP_USER",
+          "value": "${SMTP_USER}"
+        },
+        {
+          "name": "SMTP_PASSWORD",
+          "value": "${SMTP_PASSWORD}"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/artagram-auth",
+          "awslogs-region": "${AWS_REGION}",
+          "awslogs-stream-prefix": "ecs"
+        }
+      }
+    }
+  ]
+}
