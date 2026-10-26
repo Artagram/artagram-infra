@@ -46,11 +46,11 @@
         },
         {
           "name": "RABBITMQ_HOST",
-          "value": "${RABBITMQ_HOST}"
+          "value": "rabbitmq.artagram.local"
         },
         {
           "name": "RABBITMQ_PORT",
-          "value": "${RABBITMQ_PORT}"
+          "value": "5672"
         },
         {
           "name": "RABBITMQ_USER",
@@ -62,11 +62,11 @@
         },
         {
           "name": "REDIS_HOST",
-          "value": "${REDIS_HOST}"
+          "value": "redis.artagram.local"
         },
         {
           "name": "REDIS_PORT",
-          "value": "${REDIS_PORT}"
+          "value": "6379"
         },
         {
           "name": "JWT_PUBLIC_KEY_PEM",

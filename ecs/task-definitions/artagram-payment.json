@@ -46,11 +46,11 @@
         },
         {
           "name": "RABBITMQ_HOST",
-          "value": "${RABBITMQ_HOST}"
+          "value": "rabbitmq.artagram.local"
         },
         {
           "name": "RABBITMQ_PORT",
-          "value": "${RABBITMQ_PORT}"
+          "value": "5672"
         },
         {
           "name": "RABBITMQ_USER",

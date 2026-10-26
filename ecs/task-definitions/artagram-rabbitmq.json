@@ -1,0 +1,69 @@
+{
+  "family": "artagram-rabbitmq",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": [
+    "FARGATE"
+  ],
+  "cpu": "512",
+  "memory": "1024",
+  "executionRoleArn": "arn:aws:iam::${AWS_ACCOUNT_ID}:role/artagramEcsTaskExecutionRole",
+  "taskRoleArn": "arn:aws:iam::${AWS_ACCOUNT_ID}:role/artagramEcsTaskRole",
+  "volumes": [
+    {
+      "name": "rabbitmq-data",
+      "efsVolumeConfiguration": {
+        "fileSystemId": "${EFS_FILE_SYSTEM_ID}",
+        "transitEncryption": "ENABLED",
+        "authorizationConfig": {
+          "accessPointId": "${EFS_ACCESS_POINT_ID}",
+          "iam": "ENABLED"
+        }
+      }
+    }
+  ],
+  "containerDefinitions": [
+    {
+      "name": "artagram-rabbitmq",
+      "image": "${IMAGE_URI}",
+      "essential": true,
+      "environment": [
+        {
+          "name": "RABBITMQ_DEFAULT_USER",
+          "value": "${RABBITMQ_USER}"
+        },
+        {
+          "name": "RABBITMQ_DEFAULT_PASS",
+          "value": "${RABBITMQ_PASSWORD}"
+        },
+        {
+          "name": "RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS",
+          "value": "-rabbit vm_memory_high_watermark {absolute,536870912} -rabbitmq_management load_definitions \"/etc/rabbitmq/definitions.json\""
+        }
+      ],
+      "portMappings": [
+        {
+          "containerPort": 5672,
+          "protocol": "tcp"
+        },
+        {
+          "containerPort": 15672,
+          "protocol": "tcp"
+        }
+      ],
+      "mountPoints": [
+        {
+          "sourceVolume": "rabbitmq-data",
+          "containerPath": "/var/lib/rabbitmq"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/artagram-rabbitmq",
+          "awslogs-region": "${AWS_REGION}",
+          "awslogs-stream-prefix": "ecs"
+        }
+      }
+    }
+  ]
+}

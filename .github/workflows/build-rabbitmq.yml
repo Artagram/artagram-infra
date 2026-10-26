@@ -1,0 +1,75 @@
+name: Build and deploy the RabbitMQ broker image
+
+# RabbitMQ no tiene un repo propio ni un build de Maven -- es una imagen
+# oficial (rabbitmq:3.13-management-alpine) a la que solo le agregamos
+# definitions.json y enabled_plugins (ver rabbitmq/Dockerfile). Por eso
+# vive aqui, en artagram-infra, con su propio workflow en vez de llamar
+# al reusable de deploy-service.yml (que asume un build de Maven).
+#
+# Redis no necesita nada de esto: es la imagen oficial redis:7-alpine sin
+# ningun archivo propio, se registra la task definition una sola vez a
+# mano (ver AWS_DEPLOYMENT.md seccion 4).
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "rabbitmq/**"
+      - "ecs/task-definitions/artagram-rabbitmq.json"
+      - ".github/workflows/build-rabbitmq.yml"
+  workflow_dispatch: {}
+
+env:
+  AWS_REGION: us-east-1
+  ECS_CLUSTER: artagram-cluster
+  SERVICE_NAME: artagram-rabbitmq
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configurar credenciales AWS
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login en Amazon ECR
+        id: ecr-login
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build y push de la imagen
+        id: build-image
+        env:
+          ECR_REGISTRY: ${{ steps.ecr-login.outputs.registry }}
+          ECR_REPOSITORY: ${{ env.SERVICE_NAME }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build -t "$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" -t "$ECR_REGISTRY/$ECR_REPOSITORY:latest" rabbitmq/
+          docker push "$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+          docker push "$ECR_REGISTRY/$ECR_REPOSITORY:latest"
+          echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> "$GITHUB_OUTPUT"
+
+      - name: Renderizar la task definition
+        env:
+          AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+          AWS_REGION: ${{ env.AWS_REGION }}
+          IMAGE_URI: ${{ steps.build-image.outputs.image }}
+          RABBITMQ_USER: ${{ secrets.RABBITMQ_USER }}
+          RABBITMQ_PASSWORD: ${{ secrets.RABBITMQ_PASSWORD }}
+          EFS_FILE_SYSTEM_ID: ${{ secrets.EFS_FILE_SYSTEM_ID }}
+          EFS_ACCESS_POINT_ID: ${{ secrets.EFS_ACCESS_POINT_ID }}
+        run: |
+          envsubst < "ecs/task-definitions/artagram-rabbitmq.json" > rendered-task-def.json
+
+      - name: Deploy a ECS
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+        with:
+          task-definition: rendered-task-def.json
+          service: ${{ env.SERVICE_NAME }}
+          cluster: ${{ env.ECS_CLUSTER }}
+          wait-for-service-stability: true

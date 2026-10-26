@@ -30,11 +30,11 @@
         },
         {
           "name": "SPRING_RABBITMQ_HOST",
-          "value": "${RABBITMQ_HOST}"
+          "value": "rabbitmq.artagram.local"
         },
         {
           "name": "SPRING_RABBITMQ_PORT",
-          "value": "${RABBITMQ_PORT}"
+          "value": "5672"
         },
         {
           "name": "SPRING_RABBITMQ_USERNAME",
