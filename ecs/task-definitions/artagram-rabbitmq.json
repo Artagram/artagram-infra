@@ -8,19 +8,6 @@
   "memory": "1024",
   "executionRoleArn": "arn:aws:iam::${AWS_ACCOUNT_ID}:role/artagramEcsTaskExecutionRole",
   "taskRoleArn": "arn:aws:iam::${AWS_ACCOUNT_ID}:role/artagramEcsTaskRole",
-  "volumes": [
-    {
-      "name": "rabbitmq-data",
-      "efsVolumeConfiguration": {
-        "fileSystemId": "${EFS_FILE_SYSTEM_ID}",
-        "transitEncryption": "ENABLED",
-        "authorizationConfig": {
-          "accessPointId": "${EFS_ACCESS_POINT_ID}",
-          "iam": "ENABLED"
-        }
-      }
-    }
-  ],
   "containerDefinitions": [
     {
       "name": "artagram-rabbitmq",
@@ -48,12 +35,6 @@
         {
           "containerPort": 15672,
           "protocol": "tcp"
-        }
-      ],
-      "mountPoints": [
-        {
-          "sourceVolume": "rabbitmq-data",
-          "containerPath": "/var/lib/rabbitmq"
         }
       ],
       "logConfiguration": {

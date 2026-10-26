@@ -53,7 +53,7 @@ sin sticky sessions:
 | PostgreSQL 16 (`db_auth`, `db_usuarios`, `db_feed`, `db_payment`, `db_lienzo`) | **RDS for PostgreSQL** (1 instancia, 5 bases) | `db_lienzo` **sí se migra** — es la base de `artagram-canvas` (el microservicio real), no de `ARTAGRAM-backv1`; el nombre es heredado pero el dueño actual es canvas. |
 | Redis 7 | **Tarea ECS Fargate propia** (`redis:7-alpine`, imagen oficial, sin modificar) | Decisión de costo (2026-10-26): se descartó ElastiCache ($12/mes fijo, exista o no exista uso) — Redis corre como una tarea Fargate más, en el mismo cluster, descubierta por Cloud Map como `redis.artagram.local`. Escala a 0 y deja de cobrar cuando no se usa, igual que cualquier otro servicio. **Solo `artagram-canvas` lo usa de verdad** (pub/sub para `RealtimeBroadcaster` + locks distribuidos vía Redisson) — datos efímeros por diseño, no necesita volumen persistente. `artagram-feed` declara `spring.data.redis` pero ningún código la lee — config muerta. El rate limiter del gateway tampoco usa Redis: es en memoria por tarea. |
 | MongoDB 7 (`db_chat`, `db_ia`, `db_notificaciones`) | **MongoDB Atlas** (plan M0, gratis, externo a AWS) | Decisión de costo (2026-10-26): DocumentDB no tiene instancia "micro" ni free tier (mínimo ~$55/mes solo de cómputo) para 3 bases que, con el tráfico de este proyecto, no lo justifican. Atlas M0 es gratis para siempre y el driver de Mongo no distingue — cero cambio de código, solo cambia el valor del secret de connection string. Vive **fuera** de la VPC de AWS: las tareas de Fargate necesitan salida a internet para alcanzarlo (ver nota de subnets públicas en la sección 3). |
-| RabbitMQ 3 (`artagram.events`, vhosts `/` y `notifications`, shovel) | **Tarea ECS Fargate propia** (imagen custom `artagram-infra/rabbitmq/Dockerfile`, `FROM rabbitmq:3.13-management-alpine` + `definitions.json`/`enabled_plugins` horneados) | Decisión de costo (2026-10-26): se descartó Amazon MQ ($22/mes fijo) a pesar de que **sí soporta el shovel dinámico que necesitamos** (verificado) — el ahorro de correrlo como tarea Fargate pesó más. Descubierto por Cloud Map como `rabbitmq.artagram.local`. **Único punto de atención real**: sin volumen persistente, los mensajes en cola se pierden si la tarea se reinicia — se mitiga con un volumen **EFS** montado en `/var/lib/rabbitmq` (pago por GB guardado, sin costo fijo por hora, centavos al mes para este volumen). Las colas/bindings no se pierden nunca — se redeclaran solas desde `definitions.json` horneado en la imagen. |
+| RabbitMQ 3 (`artagram.events`, vhosts `/` y `notifications`, shovel) | **Tarea ECS Fargate propia** (imagen custom `artagram-infra/rabbitmq/Dockerfile`, `FROM rabbitmq:3.13-management-alpine` + `definitions.json`/`enabled_plugins` horneados) | Decisión de costo (2026-10-26): se descartó Amazon MQ ($22/mes fijo) a pesar de que **sí soporta el shovel dinámico que necesitamos** (verificado) — el ahorro de correrlo como tarea Fargate pesó más. Descubierto por Cloud Map como `rabbitmq.artagram.local`. **Decisión explícita (2026-10-26): sin volumen persistente** — se evaluó agregar EFS para no perder mensajes en tránsito en un reinicio, pero se descartó por simplicidad (más pasos de configuración para un beneficio bajo: las colas/bindings nunca se pierden, solo los mensajes que estén en cola justo en el instante de un reinicio manual, algo infrecuente y de bajo impacto para este proyecto). Se puede agregar más adelante sin tocar código, solo la task definition. |
 | MinIO (S3 local) | **Amazon S3** | Ya es compatible: AWS SDK v2 con `S3_ENDPOINT` parametrizado — en AWS real simplemente no se setea esa variable. |
 | Contenedores Docker Compose | **ECS Fargate** | 12 "servicios": los 10 de aplicación + `artagram-redis` + `artagram-rabbitmq`, 12 Task Definitions, 12 ECS Services. Los 10 de aplicación escalan por carga (Application Auto Scaling); `redis`/`rabbitmq` corren con `desiredCount: 1` fijo (son componentes con estado, no se autoescalan) — pero igual se pueden bajar a `0` manualmente entre sesiones de trabajo para no cobrar. |
 | Nombres de contenedor Docker (`http://artagram-auth:8084`) | **AWS Cloud Map** (Service Discovery) | `gateway` resuelve a los otros 9 por DNS privado (`auth.artagram.local`, etc.); los 9 servicios de aplicación que usan RabbitMQ/Redis los resuelven igual (`rabbitmq.artagram.local`, `redis.artagram.local`) en vez de nombres de red de Docker. |
@@ -71,9 +71,6 @@ sin sticky sessions:
 | VPC | 1 (la VPC default alcanza para empezar) |
 | Security Groups | 3 — ALB (80/443 público), tareas Fargate (acepta del SG del ALB en el puerto de `gateway`, y de sí mismo para que los 12 servicios se hablen entre ellos), RDS (solo acepta del SG de Fargate) |
 | Cloud Map namespace | 1 |
-| EFS filesystem | 1 (volumen de `/var/lib/rabbitmq`, para que `artagram-rabbitmq` no pierda mensajes en cola si la tarea se reinicia) |
-| EFS Access Point | 1 |
-| EFS Mount Target | 1 por AZ donde corran tareas (mínimo 1) |
 
 **Decisión de red (2026-10-26): tareas de Fargate en subnets públicas, sin
 NAT Gateway.** Las tareas necesitan salida a internet de todos modos (pull de
@@ -115,13 +112,12 @@ Redis y RabbitMQ **ya no están aquí** — son 2 tareas más de ECS Fargate
 | Recurso | Cantidad |
 |---|---|
 | ECS Task Execution Role | 1 (compartido) |
-| ECS Task Role | 1 (permiso sobre el bucket S3 + acceso al volumen EFS de `artagram-rabbitmq`) |
+| ECS Task Role | 1 (permiso sobre el bucket S3) |
 | IAM User + Access Key para GitHub Actions | 1 (empezar simple; migrar a OIDC sin llaves de larga duración cuando el flujo esté probado) |
 
 ### Observabilidad
 | Recurso | Cantidad |
 |---|---|
-| EFS filesystem + Access Point | 1 + 1 (ver sección "Red y seguridad" arriba) |
 | CloudWatch Log Groups | 12 (uno por servicio, incluyendo `redis` y `rabbitmq`) |
 
 **Orden de creación recomendado:** red/seguridad → capa de datos → ECR →
@@ -322,7 +318,6 @@ contraseña de RDS 10 veces:
 | `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_ACCOUNT_ID` | el IAM User del workflow (sección 3) |
 | `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD` | RDS PostgreSQL |
 | `RABBITMQ_USER`, `RABBITMQ_PASSWORD` | credenciales que nosotros mismos elegimos para `artagram-rabbitmq` (ya no es un broker administrado — host/puerto ahora son literales `rabbitmq.artagram.local`/`5672`, no secrets) |
-| `EFS_FILE_SYSTEM_ID`, `EFS_ACCESS_POINT_ID` | el volumen EFS que persiste `/var/lib/rabbitmq` |
 | `NOTIFICATIONS_RABBITMQ_USER`, `NOTIFICATIONS_RABBITMQ_PASSWORD` | `artagram-rabbitmq`, vhost `notifications` (usuario separado, ver diseño del shovel) |
 | `CHAT_MONGODB_URI`, `AI_MONGODB_URI`, `NOTIFICATIONS_MONGODB_URI` | MongoDB Atlas (M0, gratis) — connection string completo (`mongodb+srv://...`), con el nombre de base ya incluido en cada uno (`db_chat`, `db_ia`, `db_notificaciones`) |
 | `S3_BUCKET`, `S3_PUBLIC_ENDPOINT` | el bucket único `artagram-uploads` |
@@ -369,15 +364,15 @@ Desglose del escenario realista (~2 días/mes):
 | Fargate (12 tareas: 10 de aplicación + redis + rabbitmq), solo ~48h activas | ~$10 |
 | RDS PostgreSQL (detenida el resto del mes, solo paga almacenamiento) | ~$3 |
 | ALB (no se puede pausar, corre el mes completo) | ~$21 |
-| EFS (volumen de `/var/lib/rabbitmq`, pago por GB guardado, sin cargo fijo) | <$1 |
 | MongoDB Atlas M0 | $0 |
 | S3 + ECR + CloudWatch Logs | ~$4 |
 | **Total** | **~$38** |
 
 **Lo que se sacrificó por este ahorro:** respaldo/HA administrado de Redis
-y RabbitMQ (ahora dependen de que tú los reinicies bien y, para RabbitMQ,
-del volumen EFS para no perder mensajes en cola — ver sección 2). Para un
-proyecto de curso sin tráfico de producción real, es un trade-off
-razonable. Si más adelante el presupuesto deja de ser una restricción,
+y RabbitMQ (ahora dependen de nosotros, sin volumen persistente para
+RabbitMQ — ver sección 2: las colas/bindings siempre se redeclaran desde
+`definitions.json`, solo se pierden los mensajes en tránsito en el
+instante exacto de un reinicio manual). Para un proyecto de curso sin
+tráfico de producción real, es un trade-off razonable. Si más adelante el presupuesto deja de ser una restricción,
 volver a ElastiCache/Amazon MQ administrados es un cambio de infraestructura
 aislado (cambiar el host/puerto de 2 variables), no un cambio de código.

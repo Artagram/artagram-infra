@@ -61,8 +61,6 @@ jobs:
           IMAGE_URI: ${{ steps.build-image.outputs.image }}
           RABBITMQ_USER: ${{ secrets.RABBITMQ_USER }}
           RABBITMQ_PASSWORD: ${{ secrets.RABBITMQ_PASSWORD }}
-          EFS_FILE_SYSTEM_ID: ${{ secrets.EFS_FILE_SYSTEM_ID }}
-          EFS_ACCESS_POINT_ID: ${{ secrets.EFS_ACCESS_POINT_ID }}
         run: |
           envsubst < "ecs/task-definitions/artagram-rabbitmq.json" > rendered-task-def.json
 
