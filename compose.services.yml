@@ -178,14 +178,10 @@ services:
       DB_NAME: db_feed
       DB_USER: ${POSTGRES_USER:-artagram}
       DB_PASSWORD: ${POSTGRES_PASSWORD:-artagram}
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
-      REDIS_DATABASE: 1
       RABBITMQ_HOST: rabbitmq
       RABBITMQ_PORT: 5672
       RABBITMQ_USER: ${RABBITMQ_USER:-artagram}
       RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-artagram}
-      AUTH_JWKS_URI: http://artagram-auth:8081/.well-known/jwks.json
       JWT_PUBLIC_KEY_PATH: /app/secrets-dev/jwt-public.pem
       STORAGE_PROVIDER: ${STORAGE_PROVIDER:-s3}
       S3_ENDPOINT: http://minio:9000

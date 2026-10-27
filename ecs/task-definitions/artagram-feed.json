@@ -61,20 +61,8 @@
           "value": "${RABBITMQ_PASSWORD}"
         },
         {
-          "name": "REDIS_HOST",
-          "value": "redis.artagram.local"
-        },
-        {
-          "name": "REDIS_PORT",
-          "value": "6379"
-        },
-        {
           "name": "JWT_PUBLIC_KEY_PEM",
           "value": "${JWT_PUBLIC_KEY_PEM}"
-        },
-        {
-          "name": "JWKS_URL",
-          "value": "http://auth.artagram.local:8081/.well-known/jwks.json"
         },
         {
           "name": "S3_BUCKET",
