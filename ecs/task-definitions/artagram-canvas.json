@@ -85,10 +85,6 @@
           "value": "${AWS_REGION}"
         },
         {
-          "name": "STORAGE_TYPE",
-          "value": "s3"
-        },
-        {
           "name": "S3_PATH_STYLE",
           "value": "false"
         },
