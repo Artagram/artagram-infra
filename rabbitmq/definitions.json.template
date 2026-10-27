@@ -320,91 +320,6 @@
       "arguments": {}
     },
     {
-      "name": "chat.follow.created",
-      "vhost": "/",
-      "durable": true,
-      "auto_delete": false,
-      "arguments": {
-        "x-dead-letter-exchange": "artagram.dlx",
-        "x-dead-letter-routing-key": "chat.follow.created.dlq"
-      }
-    },
-    {
-      "name": "chat.follow.created.dlq",
-      "vhost": "/",
-      "durable": true,
-      "auto_delete": false,
-      "arguments": {}
-    },
-    {
-      "name": "chat.like.created",
-      "vhost": "/",
-      "durable": true,
-      "auto_delete": false,
-      "arguments": {
-        "x-dead-letter-exchange": "artagram.dlx",
-        "x-dead-letter-routing-key": "chat.like.created.dlq"
-      }
-    },
-    {
-      "name": "chat.like.created.dlq",
-      "vhost": "/",
-      "durable": true,
-      "auto_delete": false,
-      "arguments": {}
-    },
-    {
-      "name": "chat.comment.created",
-      "vhost": "/",
-      "durable": true,
-      "auto_delete": false,
-      "arguments": {
-        "x-dead-letter-exchange": "artagram.dlx",
-        "x-dead-letter-routing-key": "chat.comment.created.dlq"
-      }
-    },
-    {
-      "name": "chat.comment.created.dlq",
-      "vhost": "/",
-      "durable": true,
-      "auto_delete": false,
-      "arguments": {}
-    },
-    {
-      "name": "chat.subscription.updated",
-      "vhost": "/",
-      "durable": true,
-      "auto_delete": false,
-      "arguments": {
-        "x-dead-letter-exchange": "artagram.dlx",
-        "x-dead-letter-routing-key": "chat.subscription.updated.dlq"
-      }
-    },
-    {
-      "name": "chat.subscription.updated.dlq",
-      "vhost": "/",
-      "durable": true,
-      "auto_delete": false,
-      "arguments": {}
-    },
-    {
-      "name": "chat.ai.completed",
-      "vhost": "/",
-      "durable": true,
-      "auto_delete": false,
-      "arguments": {
-        "x-dead-letter-exchange": "artagram.dlx",
-        "x-dead-letter-routing-key": "chat.ai.completed.dlq"
-      }
-    },
-    {
-      "name": "chat.ai.completed.dlq",
-      "vhost": "/",
-      "durable": true,
-      "auto_delete": false,
-      "arguments": {}
-    },
-    {
       "name": "chat.user.deleted",
       "vhost": "/",
       "durable": true,
@@ -603,6 +518,23 @@
     },
     {
       "name": "notifications.ai.completed.dlq",
+      "vhost": "notifications",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    },
+    {
+      "name": "notifications.personal.message.notification",
+      "vhost": "notifications",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-dead-letter-exchange": "artagram.dlx",
+        "x-dead-letter-routing-key": "notifications.personal.message.notification.dlq"
+      }
+    },
+    {
+      "name": "notifications.personal.message.notification.dlq",
       "vhost": "notifications",
       "durable": true,
       "auto_delete": false,
@@ -954,86 +886,6 @@
     {
       "source": "artagram.events",
       "vhost": "/",
-      "destination": "chat.follow.created",
-      "destination_type": "queue",
-      "routing_key": "follow.created",
-      "arguments": {}
-    },
-    {
-      "source": "artagram.dlx",
-      "vhost": "/",
-      "destination": "chat.follow.created.dlq",
-      "destination_type": "queue",
-      "routing_key": "chat.follow.created.dlq",
-      "arguments": {}
-    },
-    {
-      "source": "artagram.events",
-      "vhost": "/",
-      "destination": "chat.like.created",
-      "destination_type": "queue",
-      "routing_key": "like.created",
-      "arguments": {}
-    },
-    {
-      "source": "artagram.dlx",
-      "vhost": "/",
-      "destination": "chat.like.created.dlq",
-      "destination_type": "queue",
-      "routing_key": "chat.like.created.dlq",
-      "arguments": {}
-    },
-    {
-      "source": "artagram.events",
-      "vhost": "/",
-      "destination": "chat.comment.created",
-      "destination_type": "queue",
-      "routing_key": "comment.created",
-      "arguments": {}
-    },
-    {
-      "source": "artagram.dlx",
-      "vhost": "/",
-      "destination": "chat.comment.created.dlq",
-      "destination_type": "queue",
-      "routing_key": "chat.comment.created.dlq",
-      "arguments": {}
-    },
-    {
-      "source": "artagram.events",
-      "vhost": "/",
-      "destination": "chat.subscription.updated",
-      "destination_type": "queue",
-      "routing_key": "subscription.updated",
-      "arguments": {}
-    },
-    {
-      "source": "artagram.dlx",
-      "vhost": "/",
-      "destination": "chat.subscription.updated.dlq",
-      "destination_type": "queue",
-      "routing_key": "chat.subscription.updated.dlq",
-      "arguments": {}
-    },
-    {
-      "source": "artagram.events",
-      "vhost": "/",
-      "destination": "chat.ai.completed",
-      "destination_type": "queue",
-      "routing_key": "ai.completed",
-      "arguments": {}
-    },
-    {
-      "source": "artagram.dlx",
-      "vhost": "/",
-      "destination": "chat.ai.completed.dlq",
-      "destination_type": "queue",
-      "routing_key": "chat.ai.completed.dlq",
-      "arguments": {}
-    },
-    {
-      "source": "artagram.events",
-      "vhost": "/",
       "destination": "chat.user.deleted",
       "destination_type": "queue",
       "routing_key": "user.deleted",
@@ -1221,6 +1073,22 @@
       "destination": "notifications.ai.completed.dlq",
       "destination_type": "queue",
       "routing_key": "notifications.ai.completed.dlq",
+      "arguments": {}
+    },
+    {
+      "source": "artagram.events",
+      "vhost": "notifications",
+      "destination": "notifications.personal.message.notification",
+      "destination_type": "queue",
+      "routing_key": "personal.message.notification",
+      "arguments": {}
+    },
+    {
+      "source": "artagram.dlx",
+      "vhost": "notifications",
+      "destination": "notifications.personal.message.notification.dlq",
+      "destination_type": "queue",
+      "routing_key": "notifications.personal.message.notification.dlq",
       "arguments": {}
     },
     {
