@@ -42,6 +42,15 @@ jobs:
         id: ecr-login
         uses: aws-actions/amazon-ecr-login@v2
 
+      - name: Renderizar definitions.json con credenciales reales
+        env:
+          RABBITMQ_USER: ${{ secrets.RABBITMQ_USER }}
+          RABBITMQ_PASSWORD: ${{ secrets.RABBITMQ_PASSWORD }}
+          NOTIFICATIONS_RABBITMQ_USER: ${{ secrets.NOTIFICATIONS_RABBITMQ_USER }}
+          NOTIFICATIONS_RABBITMQ_PASSWORD: ${{ secrets.NOTIFICATIONS_RABBITMQ_PASSWORD }}
+        run: |
+          envsubst < "rabbitmq/definitions.json.template" > "rabbitmq/definitions.json"
+
       - name: Build y push de la imagen
         id: build-image
         env:
