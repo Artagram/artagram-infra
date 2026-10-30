@@ -1174,12 +1174,24 @@
   ],
   "users": [
     {
+      "name": "artagram",
+      "password": "artagram",
+      "tags": "administrator"
+    },
+    {
       "name": "notifications",
       "password": "notifications_secret",
       "tags": ""
     }
   ],
   "permissions": [
+    {
+      "user": "artagram",
+      "vhost": "/",
+      "configure": ".*",
+      "write": ".*",
+      "read": ".*"
+    },
     {
       "user": "notifications",
       "vhost": "notifications",

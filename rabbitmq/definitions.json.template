@@ -1174,12 +1174,24 @@
   ],
   "users": [
     {
+      "name": "${RABBITMQ_USER}",
+      "password": "${RABBITMQ_PASSWORD}",
+      "tags": "administrator"
+    },
+    {
       "name": "${NOTIFICATIONS_RABBITMQ_USER}",
       "password": "${NOTIFICATIONS_RABBITMQ_PASSWORD}",
       "tags": ""
     }
   ],
   "permissions": [
+    {
+      "user": "${RABBITMQ_USER}",
+      "vhost": "/",
+      "configure": ".*",
+      "write": ".*",
+      "read": ".*"
+    },
     {
       "user": "${NOTIFICATIONS_RABBITMQ_USER}",
       "vhost": "notifications",
