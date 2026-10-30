@@ -1187,23 +1187,5 @@
       "write": ".*",
       "read": ".*"
     }
-  ],
-  "parameters": [
-    {
-      "component": "shovel",
-      "vhost": "/",
-      "name": "bridge-events-to-notifications",
-      "value": {
-        "src-protocol": "amqp091",
-        "src-uri": "amqp://${RABBITMQ_USER}:${RABBITMQ_PASSWORD}@localhost/%2f",
-        "src-exchange": "artagram.events",
-        "src-exchange-key": "#",
-        "dest-protocol": "amqp091",
-        "dest-uri": "amqp://${RABBITMQ_USER}:${RABBITMQ_PASSWORD}@localhost/notifications",
-        "dest-exchange": "artagram.events",
-        "add-forward-headers": true,
-        "ack-mode": "on-confirm"
-      }
-    }
   ]
 }
