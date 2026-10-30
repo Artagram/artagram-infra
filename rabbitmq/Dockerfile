@@ -8,3 +8,5 @@ COPY enabled_plugins /etc/rabbitmq/enabled_plugins
 # en compose.yml -- no se hornea aqui para poder ajustarla sin rebuild.
 #
 # Disparar rebuild: la imagen nunca llego a construirse en ECR.
+
+# Disparar rebuild: RABBITMQ_PASSWORD corregido (sin caracteres especiales)
