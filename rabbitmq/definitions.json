@@ -1193,6 +1193,13 @@
       "read": ".*"
     },
     {
+      "user": "artagram",
+      "vhost": "notifications",
+      "configure": ".*",
+      "write": ".*",
+      "read": ".*"
+    },
+    {
       "user": "notifications",
       "vhost": "notifications",
       "configure": ".*",

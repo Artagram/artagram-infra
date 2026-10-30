@@ -1193,6 +1193,13 @@
       "read": ".*"
     },
     {
+      "user": "${RABBITMQ_USER}",
+      "vhost": "notifications",
+      "configure": ".*",
+      "write": ".*",
+      "read": ".*"
+    },
+    {
       "user": "${NOTIFICATIONS_RABBITMQ_USER}",
       "vhost": "notifications",
       "configure": ".*",
