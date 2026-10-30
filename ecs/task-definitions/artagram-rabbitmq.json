@@ -24,7 +24,7 @@
         },
         {
           "name": "RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS",
-          "value": "-rabbit vm_memory_high_watermark {absolute,536870912} -rabbitmq_management load_definitions \"/etc/rabbitmq/definitions.json\""
+          "value": "-rabbit vm_memory_high_watermark {absolute,536870912}"
         }
       ],
       "portMappings": [
