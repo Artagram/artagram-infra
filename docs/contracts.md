@@ -53,6 +53,8 @@ El Gateway expone exactamente los mismos paths que el monolito hoy, enrutando ha
 | `GET /media/{*rutaRelativa}` | `artagram-feed` / `artagram-users` | Público (validado por firma HMAC `?exp=&sig=`) |
 | `POST /api/mensajes`, `GET /api/mensajes/conversaciones`, `GET /api/mensajes/con/{otroUsuarioId}` | `artagram-chat` (`:8085`) | Autenticado (JWT) |
 | `GET /api/comunidades/{comunidadId}/chat`, `POST /api/comunidades/{comunidadId}/chat` | `artagram-chat` (`:8085`) | Autenticado (JWT) |
+| `GET /api/artistas/recomendados?limite=10` | `artagram-users` (`:8082`) | Autenticado (JWT). Artistas que siguen tus seguidos; completa con los más seguidos. Máximo 20 |
+| `GET /api/comunidades/recomendadas?limite=10` | `artagram-canvas` (`:8084`) | Autenticado (JWT). Solo comunidades públicas de las que no has sido miembro. Máximo 20 |
 | `GET /api/artistas/siguiendo/en-vivo` | `artagram-users` (`:8082`) | Autenticado (JWT). Artistas seguidos en un lienzo o en Modo Fiesta; `comunidadId` es `null` en fiesta |
 | `GET /api/notificaciones/stream` (SSE) | `artagram-notifications` (`:8090`) | Autenticado (`Authorization`). Eventos `init`, `notificacion` y `heartbeat` cada 25 s |
 | `GET /api/notificaciones`, `POST /api/notificaciones/{id}/leer` | `artagram-notifications` (`:8090`) | Autenticado (JWT). El listado no incluye `MENSAJE_DIRECTO` |
