@@ -377,3 +377,27 @@ instante exacto de un reinicio manual). Para un proyecto de curso sin
 tráfico de producción real, es un trade-off razonable. Si más adelante el presupuesto deja de ser una restricción,
 volver a ElastiCache/Amazon MQ administrados es un cambio de infraestructura
 aislado (cambiar el host/puerto de 2 variables), no un cambio de código.
+
+---
+
+## 12. Mercado Pago
+
+El servicio `artagram-payment` usa Checkout Pro. `PAGO_PROVEEDOR` debe valer
+`mercadopago` en producción: con `fake`, `POST /api/suscripcion/confirmar`
+activa PRO sin pagar. Con `mercadopago`, el servicio no arranca si falta
+`MP_ACCESS_TOKEN`, y rechaza todos los webhooks si falta
+`MERCADOPAGO_WEBHOOK_SECRET`.
+
+1. En *Mercado Pago Developers → Tus integraciones*, crear una aplicación de
+   Checkout Pro y copiar el **Access Token** al secret `MP_ACCESS_TOKEN`
+   (primero el de prueba).
+2. En *Webhooks → Configurar notificaciones*, poner la URL
+   `https://dm9jdgs6nc89v.cloudfront.net/api/pagos/webhook/mercadopago`,
+   marcar el evento **Pagos** y copiar la **clave secreta** al secret
+   `MERCADOPAGO_WEBHOOK_SECRET`.
+3. El precio, la moneda y la URL de retorno son valores fijos en
+   `ecs/task-definitions/artagram-payment.json` (`PRO_PRECIO`, `PRO_MONEDA`,
+   `PAGO_RETORNO_URL`). La moneda debe coincidir con el país de la cuenta de
+   Mercado Pago.
+4. Para probar: comprar con un usuario de prueba de Mercado Pago y las
+   tarjetas de prueba de su documentación.

@@ -83,6 +83,18 @@
         {
           "name": "MERCADOPAGO_WEBHOOK_SECRET",
           "value": "${MERCADOPAGO_WEBHOOK_SECRET}"
+        },
+        {
+          "name": "PRO_PRECIO",
+          "value": "20000"
+        },
+        {
+          "name": "PRO_MONEDA",
+          "value": "COP"
+        },
+        {
+          "name": "PAGO_RETORNO_URL",
+          "value": "https://dm9jdgs6nc89v.cloudfront.net/suscripcion/resultado"
         }
       ],
       "logConfiguration": {
