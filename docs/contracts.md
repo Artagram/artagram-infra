@@ -53,7 +53,10 @@ El Gateway expone exactamente los mismos paths que el monolito hoy, enrutando ha
 | `GET /media/{*rutaRelativa}` | `artagram-feed` / `artagram-users` | Público (validado por firma HMAC `?exp=&sig=`) |
 | `POST /api/mensajes`, `GET /api/mensajes/conversaciones`, `GET /api/mensajes/con/{otroUsuarioId}` | `artagram-chat` (`:8085`) | Autenticado (JWT) |
 | `GET /api/comunidades/{comunidadId}/chat`, `POST /api/comunidades/{comunidadId}/chat` | `artagram-chat` (`:8085`) | Autenticado (JWT) |
-| `GET /api/notificaciones/stream` (SSE) | `artagram-chat` (`:8085`) | Autenticado (`?token=` o `Authorization`) |
+| `GET /api/notificaciones/stream` (SSE) | `artagram-notifications` (`:8090`) | Autenticado (`Authorization`). Eventos `init`, `notificacion` y `heartbeat` cada 25 s |
+| `GET /api/notificaciones`, `POST /api/notificaciones/{id}/leer` | `artagram-notifications` (`:8090`) | Autenticado (JWT). El listado no incluye `MENSAJE_DIRECTO` |
+| `GET /api/notificaciones/no-leidas/cantidad` | `artagram-notifications` (`:8090`) | Autenticado (JWT). Devuelve `{"notificaciones": 4, "mensajes": 2}` |
+| `POST /api/notificaciones/leer-todas?mensajes=false` | `artagram-notifications` (`:8090`) | Autenticado (JWT). Con `mensajes=true` marca solo los mensajes directos |
 | `/api/comunidades/**` *(excepto `/chat`)* | `artagram-lienzo` (`:8084`) | Autenticado (JWT) |
 | `/api/fiestas/**` | `artagram-lienzo` (`:8084`) | Autenticado (JWT) |
 | `/api/admin/**` | `artagram-lienzo` (`:8084`) | `ROLE_ADMIN` |
@@ -150,20 +153,20 @@ Con 3 reportes pendientes de usuarios distintos (`artagram.moderacion.reportes-p
 |---|---|---|---|
 | `user.registered` | `artagram-auth` | `users.user.registered`, `feed.user.registered`, `lienzo.user.registered` | `{"userId": "UUID", "correo": "string", "nombreArtista": "string", "rolGlobal": "USUARIO\|ADMIN", "premium": false}` |
 | `user.deleted` | `artagram-auth` | `users.user.deleted`, `feed.user.deleted`, `lienzo.user.deleted`, `chat.user.deleted` | `{"userId": "UUID"}` |
-| `follow.created` | `artagram-users` | `feed.follow.created`, `chat.follow.created` | `{"followerId": "UUID", "followerNombre": "string", "followedId": "UUID", "followedNombre": "string"}` |
+| `follow.created` | `artagram-users` | `feed.follow.created`, `notifications.follow.created` | `{"tipo": "FOLLOW_CREADO", "seguidorId": "UUID", "seguidorNombre": "string", "seguidoId": "UUID", "timestamp": "ISO-8601"}` |
 | `follow.deleted` | `artagram-users` | `feed.follow.deleted` | `{"followerId": "UUID", "followedId": "UUID"}` |
-| `subscription.updated` | `artagram-users` | `chat.subscription.updated`, `lienzo.subscription.updated` | `{"userId": "UUID", "nombreArtista": "string", "premium": true, "plan": "PREMIUM", "estado": "ACTIVO"}` |
+| `subscription.updated` | `artagram-payment` | `auth.subscription.updated`, `lienzo.subscription.updated`, `notifications.subscription.updated` | `{"tipo": "SUSCRIPCION_ACTUALIZADA", "usuarioId": "UUID", "premium": true, "plan": "PRO", "timestamp": "ISO-8601"}` |
 | `post.published` | `artagram-feed` | `media.post.published` | `{"tipo": "POST_PUBLICADO", "publicacionId": "UUID", "autorId": "UUID", "autorNombre": "string", "titulo": "string", "imagenUrl": "publicaciones/....jpg"}` |
 | `media.processed` | `artagram-media-worker` | `feed.media.processed` | `{"tipo": "MEDIA_PROCESADA", "publicacionId": "UUID", "miniaturaUrl": "miniaturas/UUID.jpg", "marcaAguaRuta": "marcadas/UUID.jpg", "blurhash": "LEHV6nWB2yk8pyo0adR*.7kCMdnj"}` |
 | `post.moderated` | `artagram-feed` | `notifications.post.moderated` | `{"tipo": "POST_MODERADO", "publicacionId": "UUID", "autorId": "UUID", "titulo": "string", "accion": "OCULTADA\|RESTAURADA", "timestamp": "ISO-8601"}` |
-| `like.created` | `artagram-feed` | `chat.like.created` | `{"postId": "UUID", "postTitulo": "string", "autorId": "UUID", "likerId": "UUID", "likerNombre": "string", "contadorLikes": 12}` |
+| `like.created` | `artagram-feed` | `notifications.like.created` | `{"tipo": "LIKES_ACTUALIZADOS", "publicacionId": "UUID", "usuarioId": "UUID", "usuarioNombre": "string", "autorId": "UUID", "contadorLikes": 12, "meGusta": true, "timestamp": "ISO-8601"}` |
 | `like.updated` | `artagram-feed` | `lienzo.like.updated` | `{"tipo": "LIKES_ACTUALIZADOS", "publicacionId": "UUID", "contadorLikes": 12}` *(retransmitido a `/topic/publicaciones/{id}/likes`)* |
-| `comment.created` | `artagram-feed` | `chat.comment.created`, `lienzo.comment.created` | `{"tipo": "COMENTARIO_CREADO", "publicacionId": "UUID", "autorPublicacionId": "UUID", "comentario": {"id": "UUID", "publicacionId": "UUID", "autorId": "UUID", "autorNombre": "string", "contenido": "string", "creadoEn": "ISO-8601"}, "contadorComentarios": 5}` |
+| `comment.created` | `artagram-feed` | `notifications.comment.created` | `{"tipo": "COMENTARIO_CREADO", "comentarioId": "UUID", "publicacionId": "UUID", "autorId": "UUID", "autorNombre": "string", "publicacionAutorId": "UUID", "contenido": "string", "contadorComentarios": 3, "timestamp": "ISO-8601"}` |
 | `comment.deleted` | `artagram-feed` | `lienzo.comment.deleted` | `{"tipo": "COMENTARIO_ELIMINADO", "publicacionId": "UUID", "comentario": {"id": "UUID", "publicacionId": "UUID", "autorId": "UUID", "autorNombre": "string", "contenido": "", "creadoEn": "ISO-8601"}, "contadorComentarios": 4}` |
 | `room.message` | `artagram-lienzo` | `chat.room.message` | `{"mensajeId": "UUID", "comunidadId": "UUID", "remitenteId": "UUID", "remitenteNombre": "string", "contenido": "string", "creadoEn": "ISO-8601"}` |
 | `canvas.closed` | `artagram-lienzo` | `feed.canvas.closed` | `{"comunidadId": "UUID", "salaId": "UUID", "anfitrionId": "UUID", "anfitrionNombre": "string", "titulo": "string", "claveS3": "string", "participantes": ["UUID"]}` |
 | `ai.analyze` | `artagram-feed` | `ai.ai.analyze` | `{"solicitudId": "UUID", "postId": "UUID\|null", "solicitanteId": "UUID", "tipo": "TECNICO\|SUGERENCIA_ETIQUETAS", "claveS3": "string\|null", "imagenDataUri": "string\|null"}` |
-| `ai.completed` | `artagram-ai-worker` | `feed.ai.completed`, `chat.ai.completed` | `{"solicitudId": "UUID", "postId": "UUID\|null", "solicitanteId": "UUID", "tipo": "TECNICO\|SUGERENCIA_ETIQUETAS", "estado": "COMPLETADO\|ERROR", "modelo": "qwen/qwen3.8-27b", "resultadoJson": "{...}"}` |
+| `ai.completed` | `artagram-ai-worker` | `feed.ai.completed`, `notifications.ai.completed` | `{"tipo": "AI_ANALISIS_COMPLETADO", "publicacionId": "UUID", "autorId": "UUID de quien pidió el análisis", "estado": "COMPLETADO", "diagnosticoGeneral": "string", "paletaDetectada": "string", "composicion": "string", "puntosMejora": "string", "sugerencias": "string", "puntuacionArmonia": 80, "timestamp": "ISO-8601"}` |
 
 ---
 
