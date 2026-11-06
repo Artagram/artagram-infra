@@ -31,9 +31,8 @@ El Gateway expone exactamente los mismos paths que el monolito hoy, enrutando ha
 
 | Método y Path | Servicio Destino | Seguridad en Gateway |
 |---|---|---|
-| `POST /api/auth/registro` | `artagram-auth` (`:8081`) | Público (`permitAll`) |
-| `GET /api/auth/verificar` | `artagram-auth` (`:8081`) | Público (`permitAll`) |
-| `POST /api/auth/login` | `artagram-auth` (`:8081`) | Público (`permitAll`) |
+| `POST /api/auth/google` | `artagram-auth` (`:8081`) | Público (`permitAll`) |
+| `POST /api/auth/google/completar` | `artagram-auth` (`:8081`) | Público (`permitAll`) |
 | `GET /api/auth/nombre-disponible` | `artagram-auth` (`:8081`) | Público (`permitAll`) |
 | `GET /.well-known/jwks.json` | `artagram-auth` (`:8081`) | Público (`permitAll`) |
 | `GET /api/perfiles/{nombreArtista}` | `artagram-users` (`:8082`) | Público (`permitAll`, JWT opcional) |
@@ -162,7 +161,7 @@ No se publican en el Gateway; solo se invocan dentro de la red de contenedores D
 
 ## 7. Identificadores Fijos de Demostración (`@Profile("seed")` y `V17`)
 
-Contraseña común de todas las cuentas de demostración: `clavesegura123`.
+Las cuentas de demostración son solo datos de ejemplo: el ingreso es exclusivamente con Google, así que no inician sesión. El rol ADMIN se otorga con la variable `ADMIN_EMAILS`.
 
 ### 7.1 Los 12 Usuarios de Demostración
 

@@ -55,30 +55,6 @@
         {
           "name": "CORS_ORIGINS",
           "value": "${CORS_ORIGINS}"
-        },
-        {
-          "name": "EMAIL_MODE",
-          "value": "${EMAIL_MODE}"
-        },
-        {
-          "name": "EMAIL_FROM",
-          "value": "${EMAIL_FROM}"
-        },
-        {
-          "name": "SMTP_HOST",
-          "value": "${SMTP_HOST}"
-        },
-        {
-          "name": "SMTP_PORT",
-          "value": "${SMTP_PORT}"
-        },
-        {
-          "name": "SMTP_USER",
-          "value": "${SMTP_USER}"
-        },
-        {
-          "name": "SMTP_PASSWORD",
-          "value": "${SMTP_PASSWORD}"
         }
       ],
       "logConfiguration": {

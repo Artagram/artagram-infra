@@ -118,15 +118,11 @@ jobs:
           MERCADOPAGO_WEBHOOK_SECRET: ${{ secrets.MERCADOPAGO_WEBHOOK_SECRET }}
           PAGO_PROVEEDOR: ${{ secrets.PAGO_PROVEEDOR }}
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
-          EMAIL_MODE: ${{ secrets.EMAIL_MODE }}
-          EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
-          SMTP_HOST: ${{ secrets.SMTP_HOST }}
-          SMTP_PORT: ${{ secrets.SMTP_PORT }}
-          SMTP_USER: ${{ secrets.SMTP_USER }}
-          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
           GRAFANA_URL: ${{ secrets.GRAFANA_URL }}
           PROMETHEUS_URL: ${{ secrets.PROMETHEUS_URL }}
           CORS_ORIGINS: ${{ vars.CORS_ORIGINS }}
+          GOOGLE_CLIENT_ID: ${{ vars.GOOGLE_CLIENT_ID }}
+          ADMIN_EMAILS: ${{ vars.ADMIN_EMAILS }}
           GATEWAY_PUBLIC_URL: ${{ vars.GATEWAY_PUBLIC_URL }}
         run: |
           envsubst < "infra/ecs/task-definitions/${{ inputs.service-name }}.json" > rendered-task-def.json

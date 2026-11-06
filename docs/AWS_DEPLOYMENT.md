@@ -325,7 +325,6 @@ contraseña de RDS 10 veces:
 | `JWT_PRIVATE_KEY_PEM` | solo `artagram-auth` la usa, pero vive en el mismo juego compartido — no hace daño que exista para los demás, que nunca la leen |
 | `MP_ACCESS_TOKEN`, `MERCADOPAGO_WEBHOOK_SECRET`, `PAGO_PROVEEDOR` | `artagram-users`/`artagram-payment` |
 | `GROQ_API_KEY` | `artagram-ai-worker` |
-| `EMAIL_MODE`, `EMAIL_FROM`, `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD` | `artagram-auth`/`artagram-notifications` (`EMAIL_MODE=log` si no se configura SMTP real todavía) |
 | `GRAFANA_URL`, `PROMETHEUS_URL` | `artagram-users` (dashboard de KPIs) |
 
 ### 9.2 Repository/Organization Variables (no son secretas)
@@ -334,6 +333,8 @@ contraseña de RDS 10 veces:
 |---|---|
 | `CORS_ORIGINS` | el dominio del frontend en producción |
 | `GATEWAY_PUBLIC_URL` | el dominio del ALB/Route53 del gateway (sin `https://`, el workflow lo antepone) |
+| `GOOGLE_CLIENT_ID` | client id de OAuth de Google Cloud (el mismo que `VITE_GOOGLE_CLIENT_ID` del frontend) |
+| `ADMIN_EMAILS` | correos de Google con rol ADMIN, separados por comas |
 
 ### 9.3 Qué NO hace falta crear por repo
 Nada — con Organization Secrets + `secrets: inherit`, los 10 repos quedan
