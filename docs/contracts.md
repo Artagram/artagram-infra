@@ -46,6 +46,8 @@ El Gateway expone exactamente los mismos paths que el monolito hoy, enrutando ha
 | `GET /api/publicaciones/artista/{autorId}`, `GET /api/publicaciones/artista/{autorId}/destacadas` | `artagram-feed` (`:8083`) | Público |
 | `GET /api/publicaciones/{id}/descargar` | `artagram-feed` (`:8083`) | Autenticado (JWT). Devuelve `{"url"}` de la versión con marca; `409 MARCA_EN_PROCESO` si aún no existe |
 | `PUT /api/publicaciones/{id}/destacar`, `DELETE /api/publicaciones/{id}/destacar` | `artagram-feed` (`:8083`) | Autenticado (JWT), solo el autor |
+| `POST /api/publicaciones/{id}/reportar` | `artagram-feed` (`:8083`) | Autenticado (JWT). `{"motivo": "CONTENIDO_INAPROPIADO\|PLAGIO\|SPAM\|OTRO", "detalle": "string"}`; `400 REPORTE_PROPIO`, `409 YA_REPORTADA` |
+| `GET /api/moderacion/reportes`, `POST /api/moderacion/publicaciones/{id}/resolver`, `POST /api/moderacion/marcas/procesar` | `artagram-feed` (`:8083`) | Solo `ADMIN` (gateway y feed). `resolver` recibe `{"accion": "OCULTAR\|RESTAURAR"}` |
 | `GET /api/publicaciones/{id}/comentarios`, `POST /api/publicaciones/{id}/comentarios`, `DELETE /api/publicaciones/{id}/comentarios/{comentarioId}` | `artagram-feed` (`:8083`) | Autenticado (JWT) |
 | `POST /api/publicaciones/{id}/analisis`, `GET /api/publicaciones/{id}/analisis`, `POST /api/ia/sugerencias` | `artagram-feed` (`:8083`) | Autenticado (JWT) |
 | `GET /media/{*rutaRelativa}` | `artagram-feed` / `artagram-users` | Público (validado por firma HMAC `?exp=&sig=`) |
@@ -118,6 +120,10 @@ Cada servicio decide con el claim `premium` del JWT.
 | Tamaño por imagen | 10 MB | 25 MB | `artagram-feed` | `artagram.planes.imagen-mb-gratis`, `imagen-mb-pro` |
 | Obras destacadas | 3 | 10 | `artagram-feed` | `artagram.planes.destacadas-gratis`, `destacadas-pro` |
 
+`obraFinalUrl` apunta a la versión con marca de agua cuando ya existe; el original se muestra solo mientras `media-worker` la genera.
+
+Con 3 reportes pendientes de usuarios distintos (`artagram.moderacion.reportes-para-ocultar`) la obra se oculta: desaparece del feed, de las búsquedas y del perfil, y responde `404` a todos menos a su autor y a los administradores. Restaurarla descarta esos reportes, así que volver a ocultarla exige 3 nuevos.
+
 `POST /api/publicaciones` recibe `multipart/form-data`: `titulo`, `descripcion`, `tecnica`, `etiquetas`, `obraFinal` y hasta 10 `imagenesProceso` (JPG, PNG, WEBP o GIF). Subir el máximo de PRO también exige `spring.servlet.multipart.max-file-size` en `artagram-feed`.
 
 ---
@@ -148,7 +154,8 @@ Cada servicio decide con el claim `premium` del JWT.
 | `follow.deleted` | `artagram-users` | `feed.follow.deleted` | `{"followerId": "UUID", "followedId": "UUID"}` |
 | `subscription.updated` | `artagram-users` | `chat.subscription.updated`, `lienzo.subscription.updated` | `{"userId": "UUID", "nombreArtista": "string", "premium": true, "plan": "PREMIUM", "estado": "ACTIVO"}` |
 | `post.published` | `artagram-feed` | `media.post.published` | `{"tipo": "POST_PUBLICADO", "publicacionId": "UUID", "autorId": "UUID", "autorNombre": "string", "titulo": "string", "imagenUrl": "publicaciones/....jpg"}` |
-| `media.processed` | `artagram-media-worker` | `feed.media.processed` | `{"tipo": "MEDIA_PROCESADA", "publicacionId": "UUID", "miniaturaUrl": "miniaturas/UUID.jpg", "marcaAguaRuta": "marcadas/UUID.jpg", "blurhash": "LEHV6nWB2yk8pyo0adR*.7kCMdnj"}` |ERROR", "blurhash": "LEHV6nWB2yk8pyo0adR*.7kCMdnj", "claveWatermark": "string", "clavesMiniaturas": {"sm": "string", "md": "string"}}` |
+| `media.processed` | `artagram-media-worker` | `feed.media.processed` | `{"tipo": "MEDIA_PROCESADA", "publicacionId": "UUID", "miniaturaUrl": "miniaturas/UUID.jpg", "marcaAguaRuta": "marcadas/UUID.jpg", "blurhash": "LEHV6nWB2yk8pyo0adR*.7kCMdnj"}` |
+| `post.moderated` | `artagram-feed` | `notifications.post.moderated` | `{"tipo": "POST_MODERADO", "publicacionId": "UUID", "autorId": "UUID", "titulo": "string", "accion": "OCULTADA\|RESTAURADA", "timestamp": "ISO-8601"}` |
 | `like.created` | `artagram-feed` | `chat.like.created` | `{"postId": "UUID", "postTitulo": "string", "autorId": "UUID", "likerId": "UUID", "likerNombre": "string", "contadorLikes": 12}` |
 | `like.updated` | `artagram-feed` | `lienzo.like.updated` | `{"tipo": "LIKES_ACTUALIZADOS", "publicacionId": "UUID", "contadorLikes": 12}` *(retransmitido a `/topic/publicaciones/{id}/likes`)* |
 | `comment.created` | `artagram-feed` | `chat.comment.created`, `lienzo.comment.created` | `{"tipo": "COMENTARIO_CREADO", "publicacionId": "UUID", "autorPublicacionId": "UUID", "comentario": {"id": "UUID", "publicacionId": "UUID", "autorId": "UUID", "autorNombre": "string", "contenido": "string", "creadoEn": "ISO-8601"}, "contadorComentarios": 5}` |

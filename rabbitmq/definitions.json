@@ -524,6 +524,23 @@
       "arguments": {}
     },
     {
+      "name": "notifications.post.moderated",
+      "vhost": "notifications",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-dead-letter-exchange": "artagram.dlx",
+        "x-dead-letter-routing-key": "notifications.post.moderated.dlq"
+      }
+    },
+    {
+      "name": "notifications.post.moderated.dlq",
+      "vhost": "notifications",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    },
+    {
       "name": "notifications.personal.message.notification",
       "vhost": "notifications",
       "durable": true,
@@ -1051,11 +1068,27 @@
       "arguments": {}
     },
     {
+      "source": "artagram.events",
+      "vhost": "notifications",
+      "destination": "notifications.post.moderated",
+      "destination_type": "queue",
+      "routing_key": "post.moderated",
+      "arguments": {}
+    },
+    {
       "source": "artagram.dlx",
       "vhost": "notifications",
       "destination": "notifications.ai.completed.dlq",
       "destination_type": "queue",
       "routing_key": "notifications.ai.completed.dlq",
+      "arguments": {}
+    },
+    {
+      "source": "artagram.dlx",
+      "vhost": "notifications",
+      "destination": "notifications.post.moderated.dlq",
+      "destination_type": "queue",
+      "routing_key": "notifications.post.moderated.dlq",
       "arguments": {}
     },
     {
