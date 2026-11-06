@@ -44,6 +44,7 @@ El Gateway expone exactamente los mismos paths que el monolito hoy, enrutando ha
 | `GET /api/feed` | `artagram-feed` (`:8083`) | Autenticado (JWT) |
 | `POST /api/publicaciones`, `PUT /api/publicaciones/{id}`, `DELETE /api/publicaciones/{id}`, `POST /api/publicaciones/{id}/like` | `artagram-feed` (`:8083`) | Autenticado (JWT) |
 | `GET /api/publicaciones/artista/{autorId}`, `GET /api/publicaciones/artista/{autorId}/destacadas` | `artagram-feed` (`:8083`) | Público |
+| `GET /api/publicaciones/{id}/descargar` | `artagram-feed` (`:8083`) | Autenticado (JWT). Devuelve `{"url"}` de la versión con marca; `409 MARCA_EN_PROCESO` si aún no existe |
 | `PUT /api/publicaciones/{id}/destacar`, `DELETE /api/publicaciones/{id}/destacar` | `artagram-feed` (`:8083`) | Autenticado (JWT), solo el autor |
 | `GET /api/publicaciones/{id}/comentarios`, `POST /api/publicaciones/{id}/comentarios`, `DELETE /api/publicaciones/{id}/comentarios/{comentarioId}` | `artagram-feed` (`:8083`) | Autenticado (JWT) |
 | `POST /api/publicaciones/{id}/analisis`, `GET /api/publicaciones/{id}/analisis`, `POST /api/ia/sugerencias` | `artagram-feed` (`:8083`) | Autenticado (JWT) |
@@ -146,8 +147,8 @@ Cada servicio decide con el claim `premium` del JWT.
 | `follow.created` | `artagram-users` | `feed.follow.created`, `chat.follow.created` | `{"followerId": "UUID", "followerNombre": "string", "followedId": "UUID", "followedNombre": "string"}` |
 | `follow.deleted` | `artagram-users` | `feed.follow.deleted` | `{"followerId": "UUID", "followedId": "UUID"}` |
 | `subscription.updated` | `artagram-users` | `chat.subscription.updated`, `lienzo.subscription.updated` | `{"userId": "UUID", "nombreArtista": "string", "premium": true, "plan": "PREMIUM", "estado": "ACTIVO"}` |
-| `post.published` | `artagram-feed` | `media.post.published` | `{"postId": "UUID", "autorId": "UUID", "autorNombre": "string", "titulo": "string", "claveS3": "publicaciones/.../obra.jpg"}` |
-| `media.processed` | `artagram-media-worker` | `feed.media.processed` | `{"postId": "UUID", "estado": "OK\|ERROR", "blurhash": "LEHV6nWB2yk8pyo0adR*.7kCMdnj", "claveWatermark": "string", "clavesMiniaturas": {"sm": "string", "md": "string"}}` |
+| `post.published` | `artagram-feed` | `media.post.published` | `{"tipo": "POST_PUBLICADO", "publicacionId": "UUID", "autorId": "UUID", "autorNombre": "string", "titulo": "string", "imagenUrl": "publicaciones/....jpg"}` |
+| `media.processed` | `artagram-media-worker` | `feed.media.processed` | `{"tipo": "MEDIA_PROCESADA", "publicacionId": "UUID", "miniaturaUrl": "miniaturas/UUID.jpg", "marcaAguaRuta": "marcadas/UUID.jpg", "blurhash": "LEHV6nWB2yk8pyo0adR*.7kCMdnj"}` |ERROR", "blurhash": "LEHV6nWB2yk8pyo0adR*.7kCMdnj", "claveWatermark": "string", "clavesMiniaturas": {"sm": "string", "md": "string"}}` |
 | `like.created` | `artagram-feed` | `chat.like.created` | `{"postId": "UUID", "postTitulo": "string", "autorId": "UUID", "likerId": "UUID", "likerNombre": "string", "contadorLikes": 12}` |
 | `like.updated` | `artagram-feed` | `lienzo.like.updated` | `{"tipo": "LIKES_ACTUALIZADOS", "publicacionId": "UUID", "contadorLikes": 12}` *(retransmitido a `/topic/publicaciones/{id}/likes`)* |
 | `comment.created` | `artagram-feed` | `chat.comment.created`, `lienzo.comment.created` | `{"tipo": "COMENTARIO_CREADO", "publicacionId": "UUID", "autorPublicacionId": "UUID", "comentario": {"id": "UUID", "publicacionId": "UUID", "autorId": "UUID", "autorNombre": "string", "contenido": "string", "creadoEn": "ISO-8601"}, "contadorComentarios": 5}` |
