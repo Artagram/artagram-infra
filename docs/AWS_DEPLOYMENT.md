@@ -380,6 +380,92 @@ aislado (cambiar el host/puerto de 2 variables), no un cambio de código.
 
 ---
 
+## 11. HTTPS de extremo a extremo con CloudFront
+
+El ALB no tiene HTTPS: su dominio `*.elb.amazonaws.com` no admite un
+certificado de ACM, y el proyecto no tiene dominio propio. La solución es
+que **CloudFront sea el único punto de entrada público**: el navegador solo
+habla HTTPS con `dm9jdgs6nc89v.cloudfront.net`, y CloudFront reenvía la API y
+el WebSocket al ALB. Google Identity y Mercado Pago lo necesitan, y además
+elimina el bloqueo por contenido mixto.
+
+**Limitación aceptada:** el tramo CloudFront → ALB sigue en HTTP, dentro de
+la red de AWS. Cerrarlo requiere un dominio propio con certificado de ACM.
+
+Estos pasos se hacen en la consola de AWS, porque el usuario IAM
+`artagram-github-actions` no tiene permisos sobre CloudFront.
+
+### 11.1 Agregar el ALB como origen
+*CloudFront → distribución `E2FJFS7QLT0BH6` → Origins → Create origin*
+
+| Campo | Valor |
+|---|---|
+| Origin domain | `artagram-alb-1008759631.us-east-1.elb.amazonaws.com` |
+| Protocol | HTTP only, puerto 80 |
+| Name | `alb-api` |
+| Response timeout | 60 s |
+
+### 11.2 Crear los behaviors
+*Behaviors → Create behavior*, uno por cada patrón: `/api/*`, `/ws`, `/ws/*`,
+`/media/*` y `/.well-known/*`. Todos con:
+
+| Campo | Valor |
+|---|---|
+| Origin | `alb-api` |
+| Viewer protocol policy | Redirect HTTP to HTTPS |
+| Allowed HTTP methods | GET, HEAD, OPTIONS, PUT, POST, PATCH, DELETE |
+| Cache policy | `CachingDisabled` |
+| Origin request policy | `AllViewer` |
+
+### 11.3 Reemplazar el fallback de la SPA (importante)
+Revisar *Error pages*. Las *custom error responses* aplican a **toda la
+distribución**, no a un behavior: si existe una regla `403/404 → /index.html`,
+los errores de la API llegarían al frontend como HTML con estado `200`.
+
+1. *Functions → Create function*, nombre `spa-fallback`, con este código, y
+   publicarla:
+   ```js
+   function handler(event) {
+     var request = event.request;
+     // Las rutas sin extensión son rutas de React Router.
+     if (request.uri.indexOf('.') === -1) {
+       request.uri = '/index.html';
+     }
+     return request;
+   }
+   ```
+2. En el behavior **Default (\*)**: *Function associations → Viewer request →
+   CloudFront Functions → `spa-fallback`*.
+3. Borrar las reglas de *Error pages*.
+
+### 11.4 Forzar HTTPS en el frontend
+En el behavior **Default (\*)**: *Viewer protocol policy → Redirect HTTP to
+HTTPS* (hoy está en `allow-all`).
+
+### 11.5 Actualizar los orígenes permitidos
+- Variable `CORS_ORIGINS` de la organización en GitHub:
+  `https://dm9jdgs6nc89v.cloudfront.net`. Es una **Variable**, no un Secret.
+  Después hay que redesplegar los servicios que la usan, porque la task
+  definition se renderiza en el deploy.
+- CORS del bucket `artagram-uploads`: agregar ese mismo origen a
+  `AllowedOrigins`, para que sigan funcionando las subidas con URL prefirmada.
+
+### 11.6 Orden del despliegue
+El PR `feature/https-cloudfront` del frontend se integra **después** de
+completar 11.1 a 11.5. Si se integra antes, el frontend apuntará a rutas que
+CloudFront todavía no reenvía al ALB.
+
+### 11.7 Verificación
+Con los servicios de ECS arriba:
+```bash
+curl -I http://dm9jdgs6nc89v.cloudfront.net/feed             # 301 a https
+curl -I https://dm9jdgs6nc89v.cloudfront.net/feed            # 200, text/html
+curl -i https://dm9jdgs6nc89v.cloudfront.net/api/feed/explorar   # JSON de la API
+curl -i https://dm9jdgs6nc89v.cloudfront.net/api/no-existe       # 404 real, no HTML
+```
+En el navegador: iniciar sesión, abrir un lienzo y confirmar que `/ws`
+conecta por `wss://`.
+
 ## 12. Mercado Pago
 
 El servicio `artagram-payment` usa Checkout Pro. `PAGO_PROVEEDOR` debe valer
