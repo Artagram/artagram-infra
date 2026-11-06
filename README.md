@@ -46,6 +46,73 @@ artagram-infra/
 
 ---
 
+## Flujo de trabajo (ramas y política de merge)
+
+Cada push a `main` despliega a producción, así que **nadie trabaja
+directamente sobre `main`**. Esto aplica a los 12 repositorios de la
+organización `Artagram`.
+
+### Ramas
+| Tipo | Nombre | Ejemplo |
+|---|---|---|
+| Funcionalidad | `feature/<funcionalidad>` | `feature/login-google` |
+| Corrección | `fix/<descripcion>` | `fix/cors-notificaciones` |
+
+- Las ramas siempre salen de un `main` actualizado:
+  `git switch main && git pull && git switch -c feature/<funcionalidad>`.
+- Si una funcionalidad toca varios repositorios (por ejemplo `auth` y el
+  frontend), se usa **el mismo nombre de rama en todos** y se abre un PR en
+  cada uno.
+
+### Pull requests
+1. `git push -u origin feature/<funcionalidad>` y abrir un PR hacia `main`.
+2. El PR ejecuta solo build y tests, sin desplegar:
+   - microservicios: job **`ci-cd / build-test`** (`mvn verify`, con JaCoCo
+     y SpotBugs);
+   - frontend: job **`Pruebas y Linting`** (lint, Vitest y build).
+3. Se necesita **1 aprobación** de otro integrante.
+4. Merge con **squash**: un commit por funcionalidad en `main`. El merge
+   dispara el deploy del servicio afectado; dos merges seguidos del mismo
+   servicio se despliegan uno detrás del otro (`concurrency` en
+   `deploy-service.yml`).
+5. La rama se borra automáticamente después del merge.
+
+### Rulesets de la organización (configuración en GitHub)
+Se configuran **una sola vez** en *Organization settings → Repository →
+Rulesets → New branch ruleset*. Son varios rulesets, porque cada tipo de
+repositorio reporta un check distinto. Si un ruleset exige un check que el
+repositorio nunca ejecuta, sus PR quedan bloqueados para siempre.
+Son tres en total: servicios, frontend e infra.
+
+**Reglas comunes a los tres:**
+
+| Campo | Valor |
+|---|---|
+| Enforcement status | `Active` |
+| Target branches | `Include default branch` |
+| Restrict deletions | ✅ |
+| Block force pushes | ✅ |
+| Require a pull request before merging | ✅, 1 aprobación, *Dismiss stale pull request approvals when new commits are pushed* |
+| Allowed merge methods | Solo `Squash` |
+| Bypass list | Vacía (ni los administradores se saltan la regla) |
+
+**Lo que cambia entre ellos:**
+
+| Ruleset | Target repositories | Require status checks to pass |
+|---|---|---|
+| `proteger-main-servicios` | Por nombre: los 10 `artagram-*` de microservicios | ✅ `ci-cd / build-test`, con *Require branches to be up to date* |
+| `proteger-main-frontend` | Por nombre: `ARTAGRAM-frontv1` | ✅ `Pruebas y Linting`, con *Require branches to be up to date* |
+| `proteger-main-infra` | Por nombre: `artagram-infra` | Sin checks (no tiene build propio en PR); solo PR + aprobación |
+
+Además, en cada repositorio: *Settings → General → Pull Requests →
+Automatically delete head branches*.
+
+> **Plan de GitHub:** los rulesets en repositorios **privados** requieren el
+> plan **GitHub Team** en la organización. Con el plan Free solo se aplican
+> a repositorios públicos.
+
+---
+
 ## Puertos Expuestos en Local
 
 | Servicio | Puerto | Consola / URL |
