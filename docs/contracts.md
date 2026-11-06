@@ -37,15 +37,15 @@ El Gateway expone exactamente los mismos paths que el monolito hoy, enrutando ha
 | `GET /.well-known/jwks.json` | `artagram-auth` (`:8081`) | Público (`permitAll`) |
 | `GET /api/perfiles/{nombreArtista}` | `artagram-users` (`:8082`) | Público (`permitAll`, JWT opcional) |
 | `POST /api/perfiles/{nombreArtista}/premium` | `artagram-users` (`:8082`) | Autenticado (JWT) |
-| `GET /api/perfil/me`, `PUT /api/perfil/me`, `POST /api/perfil/me/foto`, `POST /api/perfil/me/obras/imagen` | `artagram-users` (`:8082`) | Autenticado (JWT) |
-| `GET /api/artistas`, `POST /api/artistas/{id}/seguir`, `DELETE /api/artistas/{id}/seguir`, `GET /api/artistas/{id}/seguimiento` | `artagram-users` (`:8082`) | Autenticado (JWT) |
+| `GET /api/perfil/me`, `PUT /api/perfil/me`, `POST /api/perfil/me/foto` | `artagram-users` (`:8082`) | Autenticado (JWT) |
+| `GET /api/artistas?q=`, `GET /api/artistas/{id}`, `POST /api/artistas/{id}/seguir` (alterna seguir y dejar de seguir) | `artagram-users` (`:8082`) | Autenticado (JWT) |
 | `POST /api/pagos/webhook/**` | `artagram-users` (`:8082`) | Público (validado por firma `x-signature`) |
 | `/api/pagos/**` | `artagram-users` (`:8082`) | Autenticado (JWT) |
 | `GET /api/feed` | `artagram-feed` (`:8083`) | Autenticado (JWT) |
-| `POST /api/publicaciones`, `PATCH /api/publicaciones/{id}`, `PUT /api/publicaciones/{id}`, `DELETE /api/publicaciones/{id}`, `POST /api/publicaciones/{id}/like` | `artagram-feed` (`:8083`) | Autenticado (JWT) |
+| `POST /api/publicaciones`, `PUT /api/publicaciones/{id}`, `DELETE /api/publicaciones/{id}`, `POST /api/publicaciones/{id}/like` | `artagram-feed` (`:8083`) | Autenticado (JWT) |
 | `GET /api/publicaciones/artista/{autorId}`, `GET /api/publicaciones/artista/{autorId}/destacadas` | `artagram-feed` (`:8083`) | Público |
 | `PUT /api/publicaciones/{id}/destacar`, `DELETE /api/publicaciones/{id}/destacar` | `artagram-feed` (`:8083`) | Autenticado (JWT), solo el autor |
-| `GET /api/publicaciones/{id}/comentarios`, `POST /api/publicaciones/{id}/comentarios`, `DELETE /api/comentarios/{id}` | `artagram-feed` (`:8083`) | Autenticado (JWT) |
+| `GET /api/publicaciones/{id}/comentarios`, `POST /api/publicaciones/{id}/comentarios`, `DELETE /api/publicaciones/{id}/comentarios/{comentarioId}` | `artagram-feed` (`:8083`) | Autenticado (JWT) |
 | `POST /api/publicaciones/{id}/analisis`, `GET /api/publicaciones/{id}/analisis`, `POST /api/ia/sugerencias` | `artagram-feed` (`:8083`) | Autenticado (JWT) |
 | `GET /media/{*rutaRelativa}` | `artagram-feed` / `artagram-users` | Público (validado por firma HMAC `?exp=&sig=`) |
 | `POST /api/mensajes`, `GET /api/mensajes/conversaciones`, `GET /api/mensajes/con/{otroUsuarioId}` | `artagram-chat` (`:8085`) | Autenticado (JWT) |
