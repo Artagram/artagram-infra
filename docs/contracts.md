@@ -42,9 +42,9 @@ El Gateway expone exactamente los mismos paths que el monolito hoy, enrutando ha
 | `POST /api/pagos/webhook/**` | `artagram-users` (`:8082`) | Público (validado por firma `x-signature`) |
 | `/api/pagos/**` | `artagram-users` (`:8082`) | Autenticado (JWT) |
 | `GET /api/feed` | `artagram-feed` (`:8083`) | Autenticado (JWT) |
-| `POST /api/publicaciones`, `PATCH /api/publicaciones/{id}`, `PUT /api/publicaciones/{id}`, `DELETE /api/publicaciones/{id}`, `POST /api/publicaciones/{id}/like`, `POST /api/publicaciones/presign` | `artagram-feed` (`:8083`) | Autenticado (JWT) |
+| `POST /api/publicaciones`, `PATCH /api/publicaciones/{id}`, `PUT /api/publicaciones/{id}`, `DELETE /api/publicaciones/{id}`, `POST /api/publicaciones/{id}/like` | `artagram-feed` (`:8083`) | Autenticado (JWT) |
 | `GET /api/publicaciones/{id}/comentarios`, `POST /api/publicaciones/{id}/comentarios`, `DELETE /api/comentarios/{id}` | `artagram-feed` (`:8083`) | Autenticado (JWT) |
-| `POST /api/publicaciones/{id}/analisis`, `GET /api/publicaciones/{id}/analisis`, `GET /api/publicaciones/{id}/analisis/ultimo`, `POST /api/ia/sugerencias` | `artagram-feed` (`:8083`) | Autenticado (JWT) |
+| `POST /api/publicaciones/{id}/analisis`, `GET /api/publicaciones/{id}/analisis`, `POST /api/ia/sugerencias` | `artagram-feed` (`:8083`) | Autenticado (JWT) |
 | `GET /media/{*rutaRelativa}` | `artagram-feed` / `artagram-users` | Público (validado por firma HMAC `?exp=&sig=`) |
 | `POST /api/mensajes`, `GET /api/mensajes/conversaciones`, `GET /api/mensajes/con/{otroUsuarioId}` | `artagram-chat` (`:8085`) | Autenticado (JWT) |
 | `GET /api/comunidades/{comunidadId}/chat`, `POST /api/comunidades/{comunidadId}/chat` | `artagram-chat` (`:8085`) | Autenticado (JWT) |
@@ -98,9 +98,23 @@ Todos los servicios y el Gateway responden errores con la misma estructura JSON:
 ```
 
 - `401 Unauthorized` -> `code: "NO_AUTENTICADO"`
-- `403 Forbidden` -> `code: "SIN_PERMISO"` (o códigos de negocio como `"TOPE_COMUNIDADES"`)
+- `403 Forbidden` -> `code: "SIN_PERMISO"`, o `code: "PLAN_LIMITE"` cuando el plan gratis llega a un tope (el frontend muestra el aviso para pasar a PRO)
 - `404 Not Found` -> `code: "RECURSO_NO_ENCONTRADO"` (o específicos de dominio)
 - Cabecera HTTP/AMQP de trazabilidad: `X-Trace-Id`.
+
+### Límites por plan
+
+Cada servicio decide con el claim `premium` del JWT.
+
+| Beneficio | Gratis | PRO | Servicio | Propiedad |
+|---|---|---|---|---|
+| Comunidades creadas | 3 | Ilimitadas | `artagram-canvas` | `app.quotas.free-max-communities` |
+| Salas de fiesta activas como anfitrión | 1 | Ilimitadas | `artagram-canvas` | `app.party.free-max-salas-activas` |
+| Análisis y sugerencias de IA por mes | 5 | Ilimitados | `artagram-feed` | `artagram.planes.ia-gratis-por-mes` |
+| Obras publicadas | 50 | 500 | `artagram-feed` | `artagram.planes.publicaciones-gratis`, `publicaciones-pro` |
+| Tamaño por imagen | 10 MB | 25 MB | `artagram-feed` | `artagram.planes.imagen-mb-gratis`, `imagen-mb-pro` |
+
+`POST /api/publicaciones` recibe `multipart/form-data`: `titulo`, `descripcion`, `tecnica`, `etiquetas`, `obraFinal` y hasta 10 `imagenesProceso` (JPG, PNG, WEBP o GIF). Subir el máximo de PRO también exige `spring.servlet.multipart.max-file-size` en `artagram-feed`.
 
 ---
 
