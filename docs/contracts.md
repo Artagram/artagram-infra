@@ -53,6 +53,7 @@ El Gateway expone exactamente los mismos paths que el monolito hoy, enrutando ha
 | `GET /media/{*rutaRelativa}` | `artagram-feed` / `artagram-users` | Público (validado por firma HMAC `?exp=&sig=`) |
 | `POST /api/mensajes`, `GET /api/mensajes/conversaciones`, `GET /api/mensajes/con/{otroUsuarioId}` | `artagram-chat` (`:8085`) | Autenticado (JWT) |
 | `GET /api/comunidades/{comunidadId}/chat`, `POST /api/comunidades/{comunidadId}/chat` | `artagram-chat` (`:8085`) | Autenticado (JWT) |
+| `GET /api/artistas/siguiendo/en-vivo` | `artagram-users` (`:8082`) | Autenticado (JWT). Artistas seguidos en un lienzo o en Modo Fiesta; `comunidadId` es `null` en fiesta |
 | `GET /api/notificaciones/stream` (SSE) | `artagram-notifications` (`:8090`) | Autenticado (`Authorization`). Eventos `init`, `notificacion` y `heartbeat` cada 25 s |
 | `GET /api/notificaciones`, `POST /api/notificaciones/{id}/leer` | `artagram-notifications` (`:8090`) | Autenticado (JWT). El listado no incluye `MENSAJE_DIRECTO` |
 | `GET /api/notificaciones/no-leidas/cantidad` | `artagram-notifications` (`:8090`) | Autenticado (JWT). Devuelve `{"notificaciones": 4, "mensajes": 2}` |
@@ -158,6 +159,8 @@ Con 3 reportes pendientes de usuarios distintos (`artagram.moderacion.reportes-p
 | `subscription.updated` | `artagram-payment` | `auth.subscription.updated`, `lienzo.subscription.updated`, `notifications.subscription.updated` | `{"tipo": "SUSCRIPCION_ACTUALIZADA", "usuarioId": "UUID", "premium": true, "plan": "PRO", "timestamp": "ISO-8601"}` |
 | `post.published` | `artagram-feed` | `media.post.published` | `{"tipo": "POST_PUBLICADO", "publicacionId": "UUID", "autorId": "UUID", "autorNombre": "string", "titulo": "string", "imagenUrl": "publicaciones/....jpg"}` |
 | `media.processed` | `artagram-media-worker` | `feed.media.processed` | `{"tipo": "MEDIA_PROCESADA", "publicacionId": "UUID", "miniaturaUrl": "miniaturas/UUID.jpg", "marcaAguaRuta": "marcadas/UUID.jpg", "blurhash": "LEHV6nWB2yk8pyo0adR*.7kCMdnj"}` |
+| `collab.session.started` | `artagram-canvas` | `users.collab.session.started` | `{"usuarioId": "UUID", "actividadId": "sesion:suscripcion", "tipo": "LIENZO\|FIESTA", "recursoId": "UUID", "ocurridoEn": "ISO-8601"}` |
+| `collab.session.ended` | `artagram-canvas` | `users.collab.session.ended` | `{"usuarioId": "UUID", "actividadId": "sesion:suscripcion", "duracionMs": 1000, "ocurridoEn": "ISO-8601"}` |
 | `post.moderated` | `artagram-feed` | `notifications.post.moderated` | `{"tipo": "POST_MODERADO", "publicacionId": "UUID", "autorId": "UUID", "titulo": "string", "accion": "OCULTADA\|RESTAURADA", "timestamp": "ISO-8601"}` |
 | `like.created` | `artagram-feed` | `notifications.like.created` | `{"tipo": "LIKES_ACTUALIZADOS", "publicacionId": "UUID", "usuarioId": "UUID", "usuarioNombre": "string", "autorId": "UUID", "contadorLikes": 12, "meGusta": true, "timestamp": "ISO-8601"}` |
 | `like.updated` | `artagram-feed` | `lienzo.like.updated` | `{"tipo": "LIKES_ACTUALIZADOS", "publicacionId": "UUID", "contadorLikes": 12}` *(retransmitido a `/topic/publicaciones/{id}/likes`)* |
