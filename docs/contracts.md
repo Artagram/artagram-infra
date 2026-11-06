@@ -43,6 +43,8 @@ El Gateway expone exactamente los mismos paths que el monolito hoy, enrutando ha
 | `/api/pagos/**` | `artagram-users` (`:8082`) | Autenticado (JWT) |
 | `GET /api/feed` | `artagram-feed` (`:8083`) | Autenticado (JWT) |
 | `POST /api/publicaciones`, `PATCH /api/publicaciones/{id}`, `PUT /api/publicaciones/{id}`, `DELETE /api/publicaciones/{id}`, `POST /api/publicaciones/{id}/like` | `artagram-feed` (`:8083`) | Autenticado (JWT) |
+| `GET /api/publicaciones/artista/{autorId}`, `GET /api/publicaciones/artista/{autorId}/destacadas` | `artagram-feed` (`:8083`) | Público |
+| `PUT /api/publicaciones/{id}/destacar`, `DELETE /api/publicaciones/{id}/destacar` | `artagram-feed` (`:8083`) | Autenticado (JWT), solo el autor |
 | `GET /api/publicaciones/{id}/comentarios`, `POST /api/publicaciones/{id}/comentarios`, `DELETE /api/comentarios/{id}` | `artagram-feed` (`:8083`) | Autenticado (JWT) |
 | `POST /api/publicaciones/{id}/analisis`, `GET /api/publicaciones/{id}/analisis`, `POST /api/ia/sugerencias` | `artagram-feed` (`:8083`) | Autenticado (JWT) |
 | `GET /media/{*rutaRelativa}` | `artagram-feed` / `artagram-users` | Público (validado por firma HMAC `?exp=&sig=`) |
@@ -113,6 +115,7 @@ Cada servicio decide con el claim `premium` del JWT.
 | Análisis y sugerencias de IA por mes | 5 | Ilimitados | `artagram-feed` | `artagram.planes.ia-gratis-por-mes` |
 | Obras publicadas | 50 | 500 | `artagram-feed` | `artagram.planes.publicaciones-gratis`, `publicaciones-pro` |
 | Tamaño por imagen | 10 MB | 25 MB | `artagram-feed` | `artagram.planes.imagen-mb-gratis`, `imagen-mb-pro` |
+| Obras destacadas | 3 | 10 | `artagram-feed` | `artagram.planes.destacadas-gratis`, `destacadas-pro` |
 
 `POST /api/publicaciones` recibe `multipart/form-data`: `titulo`, `descripcion`, `tecnica`, `etiquetas`, `obraFinal` y hasta 10 `imagenesProceso` (JPG, PNG, WEBP o GIF). Subir el máximo de PRO también exige `spring.servlet.multipart.max-file-size` en `artagram-feed`.
 
