@@ -190,6 +190,8 @@ services:
       S3_ACCESS_KEY: ${MINIO_ROOT_USER:-artagram}
       S3_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-artagram123}
       S3_REGION: us-east-1
+      GROQ_API_KEY: ${GROQ_API_KEY:-}
+      GROQ_MODEL: ${GROQ_MODEL:-qwen/qwen3.8-27b}
       APP_API_BASE_URL: http://localhost:8080
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-seed}
       JAVA_TOOL_OPTIONS: "-Xms64m -Xmx256m -XX:+UseSerialGC -XX:MaxMetaspaceSize=128m"
@@ -259,7 +261,7 @@ services:
       EMAIL_MODE: ${EMAIL_MODE:-log}
       VERIFICACION_CORREO: ${VERIFICACION_CORREO:-false}
       GROQ_API_KEY: ${GROQ_API_KEY:-}
-      GROQ_MODELO: ${GROQ_MODELO:-qwen/qwen3.8-27b}
+      GROQ_MODEL: ${GROQ_MODEL:-qwen/qwen3.8-27b}
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-seed}
       JAVA_TOOL_OPTIONS: "-Xms128m -Xmx512m -XX:+UseSerialGC -XX:MaxMetaspaceSize=192m"
     volumes:
@@ -387,7 +389,7 @@ services:
       S3_REGION: us-east-1
       LLM_PROVIDER: ${LLM_PROVIDER:-fake}
       GROQ_API_KEY: ${GROQ_API_KEY:-}
-      GROQ_MODELO: ${GROQ_MODELO:-qwen/qwen3.8-27b}
+      GROQ_MODEL: ${GROQ_MODEL:-qwen/qwen3.8-27b}
       JAVA_TOOL_OPTIONS: "-Xms64m -Xmx256m -XX:+UseSerialGC -XX:MaxMetaspaceSize=128m"
     deploy:
       resources:

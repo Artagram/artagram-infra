@@ -62,7 +62,7 @@
         },
         {
           "name": "GROQ_MODEL",
-          "value": "llama-3.3-70b-versatile"
+          "value": "qwen/qwen3.8-27b"
         }
       ],
       "logConfiguration": {

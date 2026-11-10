@@ -25,6 +25,14 @@
           "value": "8083"
         },
         {
+          "name": "GROQ_API_KEY",
+          "value": "${GROQ_API_KEY}"
+        },
+        {
+          "name": "GROQ_MODEL",
+          "value": "qwen/qwen3.8-27b"
+        },
+        {
           "name": "DB_HOST",
           "value": "${DB_HOST}"
         },
