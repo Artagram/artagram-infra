@@ -77,36 +77,12 @@
           "value": "60"
         },
         {
-          "name": "EMAIL_MODE",
-          "value": "${EMAIL_MODE}"
+          "name": "GOOGLE_CLIENT_ID",
+          "value": "${GOOGLE_CLIENT_ID}"
         },
         {
-          "name": "EMAIL_FROM",
-          "value": "${EMAIL_FROM}"
-        },
-        {
-          "name": "EMAIL_VERIFICACION_REQUERIDA",
-          "value": "false"
-        },
-        {
-          "name": "EMAIL_VERIFY_URL",
-          "value": "https://${GATEWAY_PUBLIC_URL}/verificar"
-        },
-        {
-          "name": "SMTP_HOST",
-          "value": "${SMTP_HOST}"
-        },
-        {
-          "name": "SMTP_PORT",
-          "value": "${SMTP_PORT}"
-        },
-        {
-          "name": "SMTP_USER",
-          "value": "${SMTP_USER}"
-        },
-        {
-          "name": "SMTP_PASSWORD",
-          "value": "${SMTP_PASSWORD}"
+          "name": "ADMIN_EMAILS",
+          "value": "${ADMIN_EMAILS}"
         }
       ],
       "logConfiguration": {

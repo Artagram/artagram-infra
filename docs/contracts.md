@@ -31,25 +31,35 @@ El Gateway expone exactamente los mismos paths que el monolito hoy, enrutando ha
 
 | Método y Path | Servicio Destino | Seguridad en Gateway |
 |---|---|---|
-| `POST /api/auth/registro` | `artagram-auth` (`:8081`) | Público (`permitAll`) |
-| `GET /api/auth/verificar` | `artagram-auth` (`:8081`) | Público (`permitAll`) |
-| `POST /api/auth/login` | `artagram-auth` (`:8081`) | Público (`permitAll`) |
+| `POST /api/auth/google` | `artagram-auth` (`:8081`) | Público (`permitAll`) |
+| `POST /api/auth/google/completar` | `artagram-auth` (`:8081`) | Público (`permitAll`) |
 | `GET /api/auth/nombre-disponible` | `artagram-auth` (`:8081`) | Público (`permitAll`) |
 | `GET /.well-known/jwks.json` | `artagram-auth` (`:8081`) | Público (`permitAll`) |
 | `GET /api/perfiles/{nombreArtista}` | `artagram-users` (`:8082`) | Público (`permitAll`, JWT opcional) |
 | `POST /api/perfiles/{nombreArtista}/premium` | `artagram-users` (`:8082`) | Autenticado (JWT) |
-| `GET /api/perfil/me`, `PUT /api/perfil/me`, `POST /api/perfil/me/foto`, `POST /api/perfil/me/obras/imagen` | `artagram-users` (`:8082`) | Autenticado (JWT) |
-| `GET /api/artistas`, `POST /api/artistas/{id}/seguir`, `DELETE /api/artistas/{id}/seguir`, `GET /api/artistas/{id}/seguimiento` | `artagram-users` (`:8082`) | Autenticado (JWT) |
+| `GET /api/perfil/me`, `PUT /api/perfil/me`, `POST /api/perfil/me/foto` | `artagram-users` (`:8082`) | Autenticado (JWT) |
+| `GET /api/artistas?q=`, `GET /api/artistas/{id}`, `POST /api/artistas/{id}/seguir` (alterna seguir y dejar de seguir) | `artagram-users` (`:8082`) | Autenticado (JWT) |
 | `POST /api/pagos/webhook/**` | `artagram-users` (`:8082`) | Público (validado por firma `x-signature`) |
 | `/api/pagos/**` | `artagram-users` (`:8082`) | Autenticado (JWT) |
 | `GET /api/feed` | `artagram-feed` (`:8083`) | Autenticado (JWT) |
-| `POST /api/publicaciones`, `PATCH /api/publicaciones/{id}`, `PUT /api/publicaciones/{id}`, `DELETE /api/publicaciones/{id}`, `POST /api/publicaciones/{id}/like`, `POST /api/publicaciones/presign` | `artagram-feed` (`:8083`) | Autenticado (JWT) |
-| `GET /api/publicaciones/{id}/comentarios`, `POST /api/publicaciones/{id}/comentarios`, `DELETE /api/comentarios/{id}` | `artagram-feed` (`:8083`) | Autenticado (JWT) |
-| `POST /api/publicaciones/{id}/analisis`, `GET /api/publicaciones/{id}/analisis`, `GET /api/publicaciones/{id}/analisis/ultimo`, `POST /api/ia/sugerencias` | `artagram-feed` (`:8083`) | Autenticado (JWT) |
+| `POST /api/publicaciones`, `PUT /api/publicaciones/{id}`, `DELETE /api/publicaciones/{id}`, `POST /api/publicaciones/{id}/like` | `artagram-feed` (`:8083`) | Autenticado (JWT) |
+| `GET /api/publicaciones/artista/{autorId}`, `GET /api/publicaciones/artista/{autorId}/destacadas` | `artagram-feed` (`:8083`) | Público |
+| `GET /api/publicaciones/{id}/descargar` | `artagram-feed` (`:8083`) | Autenticado (JWT). Devuelve `{"url"}` de la versión con marca; `409 MARCA_EN_PROCESO` si aún no existe |
+| `PUT /api/publicaciones/{id}/destacar`, `DELETE /api/publicaciones/{id}/destacar` | `artagram-feed` (`:8083`) | Autenticado (JWT), solo el autor |
+| `POST /api/publicaciones/{id}/reportar` | `artagram-feed` (`:8083`) | Autenticado (JWT). `{"motivo": "CONTENIDO_INAPROPIADO\|PLAGIO\|SPAM\|OTRO", "detalle": "string"}`; `400 REPORTE_PROPIO`, `409 YA_REPORTADA` |
+| `GET /api/moderacion/reportes`, `POST /api/moderacion/publicaciones/{id}/resolver`, `POST /api/moderacion/marcas/procesar` | `artagram-feed` (`:8083`) | Solo `ADMIN` (gateway y feed). `resolver` recibe `{"accion": "OCULTAR\|RESTAURAR"}` |
+| `GET /api/publicaciones/{id}/comentarios`, `POST /api/publicaciones/{id}/comentarios`, `DELETE /api/publicaciones/{id}/comentarios/{comentarioId}` | `artagram-feed` (`:8083`) | Autenticado (JWT) |
+| `POST /api/publicaciones/{id}/analisis`, `GET /api/publicaciones/{id}/analisis`, `POST /api/ia/sugerencias` | `artagram-feed` (`:8083`) | Autenticado (JWT) |
 | `GET /media/{*rutaRelativa}` | `artagram-feed` / `artagram-users` | Público (validado por firma HMAC `?exp=&sig=`) |
 | `POST /api/mensajes`, `GET /api/mensajes/conversaciones`, `GET /api/mensajes/con/{otroUsuarioId}` | `artagram-chat` (`:8085`) | Autenticado (JWT) |
 | `GET /api/comunidades/{comunidadId}/chat`, `POST /api/comunidades/{comunidadId}/chat` | `artagram-chat` (`:8085`) | Autenticado (JWT) |
-| `GET /api/notificaciones/stream` (SSE) | `artagram-chat` (`:8085`) | Autenticado (`?token=` o `Authorization`) |
+| `GET /api/artistas/recomendados?limite=10` | `artagram-users` (`:8082`) | Autenticado (JWT). Artistas que siguen tus seguidos; completa con los más seguidos. Máximo 20 |
+| `GET /api/comunidades/recomendadas?limite=10` | `artagram-canvas` (`:8084`) | Autenticado (JWT). Solo comunidades públicas de las que no has sido miembro. Máximo 20 |
+| `GET /api/artistas/siguiendo/en-vivo` | `artagram-users` (`:8082`) | Autenticado (JWT). Artistas seguidos en un lienzo o en Modo Fiesta; `comunidadId` es `null` en fiesta |
+| `GET /api/notificaciones/stream` (SSE) | `artagram-notifications` (`:8090`) | Autenticado (`Authorization`). Eventos `init`, `notificacion` y `heartbeat` cada 25 s |
+| `GET /api/notificaciones`, `POST /api/notificaciones/{id}/leer` | `artagram-notifications` (`:8090`) | Autenticado (JWT). El listado no incluye `MENSAJE_DIRECTO` |
+| `GET /api/notificaciones/no-leidas/cantidad` | `artagram-notifications` (`:8090`) | Autenticado (JWT). Devuelve `{"notificaciones": 4, "mensajes": 2}` |
+| `POST /api/notificaciones/leer-todas?mensajes=false` | `artagram-notifications` (`:8090`) | Autenticado (JWT). Con `mensajes=true` marca solo los mensajes directos |
 | `/api/comunidades/**` *(excepto `/chat`)* | `artagram-lienzo` (`:8084`) | Autenticado (JWT) |
 | `/api/fiestas/**` | `artagram-lienzo` (`:8084`) | Autenticado (JWT) |
 | `/api/admin/**` | `artagram-lienzo` (`:8084`) | `ROLE_ADMIN` |
@@ -99,9 +109,28 @@ Todos los servicios y el Gateway responden errores con la misma estructura JSON:
 ```
 
 - `401 Unauthorized` -> `code: "NO_AUTENTICADO"`
-- `403 Forbidden` -> `code: "SIN_PERMISO"` (o códigos de negocio como `"TOPE_COMUNIDADES"`)
+- `403 Forbidden` -> `code: "SIN_PERMISO"`, o `code: "PLAN_LIMITE"` cuando el plan gratis llega a un tope (el frontend muestra el aviso para pasar a PRO)
 - `404 Not Found` -> `code: "RECURSO_NO_ENCONTRADO"` (o específicos de dominio)
 - Cabecera HTTP/AMQP de trazabilidad: `X-Trace-Id`.
+
+### Límites por plan
+
+Cada servicio decide con el claim `premium` del JWT.
+
+| Beneficio | Gratis | PRO | Servicio | Propiedad |
+|---|---|---|---|---|
+| Comunidades creadas | 3 | Ilimitadas | `artagram-canvas` | `app.quotas.free-max-communities` |
+| Salas de fiesta activas como anfitrión | 1 | Ilimitadas | `artagram-canvas` | `app.party.free-max-salas-activas` |
+| Análisis y sugerencias de IA por mes | 5 | Ilimitados | `artagram-feed` | `artagram.planes.ia-gratis-por-mes` |
+| Obras publicadas | 50 | 500 | `artagram-feed` | `artagram.planes.publicaciones-gratis`, `publicaciones-pro` |
+| Tamaño por imagen | 10 MB | 25 MB | `artagram-feed` | `artagram.planes.imagen-mb-gratis`, `imagen-mb-pro` |
+| Obras destacadas | 3 | 10 | `artagram-feed` | `artagram.planes.destacadas-gratis`, `destacadas-pro` |
+
+`obraFinalUrl` apunta a la versión con marca de agua cuando ya existe; el original se muestra solo mientras `media-worker` la genera.
+
+Con 3 reportes pendientes de usuarios distintos (`artagram.moderacion.reportes-para-ocultar`) la obra se oculta: desaparece del feed, de las búsquedas y del perfil, y responde `404` a todos menos a su autor y a los administradores. Restaurarla descarta esos reportes, así que volver a ocultarla exige 3 nuevos.
+
+`POST /api/publicaciones` recibe `multipart/form-data`: `titulo`, `descripcion`, `tecnica`, `etiquetas`, `obraFinal` y hasta 10 `imagenesProceso` (JPG, PNG, WEBP o GIF). Subir el máximo de PRO también exige `spring.servlet.multipart.max-file-size` en `artagram-feed`.
 
 ---
 
@@ -127,19 +156,22 @@ Todos los servicios y el Gateway responden errores con la misma estructura JSON:
 |---|---|---|---|
 | `user.registered` | `artagram-auth` | `users.user.registered`, `feed.user.registered`, `lienzo.user.registered` | `{"userId": "UUID", "correo": "string", "nombreArtista": "string", "rolGlobal": "USUARIO\|ADMIN", "premium": false}` |
 | `user.deleted` | `artagram-auth` | `users.user.deleted`, `feed.user.deleted`, `lienzo.user.deleted`, `chat.user.deleted` | `{"userId": "UUID"}` |
-| `follow.created` | `artagram-users` | `feed.follow.created`, `chat.follow.created` | `{"followerId": "UUID", "followerNombre": "string", "followedId": "UUID", "followedNombre": "string"}` |
+| `follow.created` | `artagram-users` | `feed.follow.created`, `notifications.follow.created` | `{"tipo": "FOLLOW_CREADO", "seguidorId": "UUID", "seguidorNombre": "string", "seguidoId": "UUID", "timestamp": "ISO-8601"}` |
 | `follow.deleted` | `artagram-users` | `feed.follow.deleted` | `{"followerId": "UUID", "followedId": "UUID"}` |
-| `subscription.updated` | `artagram-users` | `chat.subscription.updated`, `lienzo.subscription.updated` | `{"userId": "UUID", "nombreArtista": "string", "premium": true, "plan": "PREMIUM", "estado": "ACTIVO"}` |
-| `post.published` | `artagram-feed` | `media.post.published` | `{"postId": "UUID", "autorId": "UUID", "autorNombre": "string", "titulo": "string", "claveS3": "publicaciones/.../obra.jpg"}` |
-| `media.processed` | `artagram-media-worker` | `feed.media.processed` | `{"postId": "UUID", "estado": "OK\|ERROR", "blurhash": "LEHV6nWB2yk8pyo0adR*.7kCMdnj", "claveWatermark": "string", "clavesMiniaturas": {"sm": "string", "md": "string"}}` |
-| `like.created` | `artagram-feed` | `chat.like.created` | `{"postId": "UUID", "postTitulo": "string", "autorId": "UUID", "likerId": "UUID", "likerNombre": "string", "contadorLikes": 12}` |
+| `subscription.updated` | `artagram-payment` | `auth.subscription.updated`, `lienzo.subscription.updated`, `notifications.subscription.updated` | `{"tipo": "SUSCRIPCION_ACTUALIZADA", "usuarioId": "UUID", "premium": true, "plan": "PRO", "timestamp": "ISO-8601"}` |
+| `post.published` | `artagram-feed` | `media.post.published` | `{"tipo": "POST_PUBLICADO", "publicacionId": "UUID", "autorId": "UUID", "autorNombre": "string", "titulo": "string", "imagenUrl": "publicaciones/....jpg"}` |
+| `media.processed` | `artagram-media-worker` | `feed.media.processed` | `{"tipo": "MEDIA_PROCESADA", "publicacionId": "UUID", "miniaturaUrl": "miniaturas/UUID.jpg", "marcaAguaRuta": "marcadas/UUID.jpg", "blurhash": "LEHV6nWB2yk8pyo0adR*.7kCMdnj"}` |
+| `collab.session.started` | `artagram-canvas` | `users.collab.session.started` | `{"usuarioId": "UUID", "actividadId": "sesion:suscripcion", "tipo": "LIENZO\|FIESTA", "recursoId": "UUID", "ocurridoEn": "ISO-8601"}` |
+| `collab.session.ended` | `artagram-canvas` | `users.collab.session.ended` | `{"usuarioId": "UUID", "actividadId": "sesion:suscripcion", "duracionMs": 1000, "ocurridoEn": "ISO-8601"}` |
+| `post.moderated` | `artagram-feed` | `notifications.post.moderated` | `{"tipo": "POST_MODERADO", "publicacionId": "UUID", "autorId": "UUID", "titulo": "string", "accion": "OCULTADA\|RESTAURADA", "timestamp": "ISO-8601"}` |
+| `like.created` | `artagram-feed` | `notifications.like.created` | `{"tipo": "LIKES_ACTUALIZADOS", "publicacionId": "UUID", "usuarioId": "UUID", "usuarioNombre": "string", "autorId": "UUID", "contadorLikes": 12, "meGusta": true, "timestamp": "ISO-8601"}` |
 | `like.updated` | `artagram-feed` | `lienzo.like.updated` | `{"tipo": "LIKES_ACTUALIZADOS", "publicacionId": "UUID", "contadorLikes": 12}` *(retransmitido a `/topic/publicaciones/{id}/likes`)* |
-| `comment.created` | `artagram-feed` | `chat.comment.created`, `lienzo.comment.created` | `{"tipo": "COMENTARIO_CREADO", "publicacionId": "UUID", "autorPublicacionId": "UUID", "comentario": {"id": "UUID", "publicacionId": "UUID", "autorId": "UUID", "autorNombre": "string", "contenido": "string", "creadoEn": "ISO-8601"}, "contadorComentarios": 5}` |
+| `comment.created` | `artagram-feed` | `notifications.comment.created` | `{"tipo": "COMENTARIO_CREADO", "comentarioId": "UUID", "publicacionId": "UUID", "autorId": "UUID", "autorNombre": "string", "publicacionAutorId": "UUID", "contenido": "string", "contadorComentarios": 3, "timestamp": "ISO-8601"}` |
 | `comment.deleted` | `artagram-feed` | `lienzo.comment.deleted` | `{"tipo": "COMENTARIO_ELIMINADO", "publicacionId": "UUID", "comentario": {"id": "UUID", "publicacionId": "UUID", "autorId": "UUID", "autorNombre": "string", "contenido": "", "creadoEn": "ISO-8601"}, "contadorComentarios": 4}` |
 | `room.message` | `artagram-lienzo` | `chat.room.message` | `{"mensajeId": "UUID", "comunidadId": "UUID", "remitenteId": "UUID", "remitenteNombre": "string", "contenido": "string", "creadoEn": "ISO-8601"}` |
 | `canvas.closed` | `artagram-lienzo` | `feed.canvas.closed` | `{"comunidadId": "UUID", "salaId": "UUID", "anfitrionId": "UUID", "anfitrionNombre": "string", "titulo": "string", "claveS3": "string", "participantes": ["UUID"]}` |
 | `ai.analyze` | `artagram-feed` | `ai.ai.analyze` | `{"solicitudId": "UUID", "postId": "UUID\|null", "solicitanteId": "UUID", "tipo": "TECNICO\|SUGERENCIA_ETIQUETAS", "claveS3": "string\|null", "imagenDataUri": "string\|null"}` |
-| `ai.completed` | `artagram-ai-worker` | `feed.ai.completed`, `chat.ai.completed` | `{"solicitudId": "UUID", "postId": "UUID\|null", "solicitanteId": "UUID", "tipo": "TECNICO\|SUGERENCIA_ETIQUETAS", "estado": "COMPLETADO\|ERROR", "modelo": "qwen/qwen3.8-27b", "resultadoJson": "{...}"}` |
+| `ai.completed` | `artagram-ai-worker` | `feed.ai.completed`, `notifications.ai.completed` | `{"tipo": "AI_ANALISIS_COMPLETADO", "publicacionId": "UUID", "autorId": "UUID de quien pidió el análisis", "estado": "COMPLETADO", "diagnosticoGeneral": "string", "paletaDetectada": "string", "composicion": "string", "puntosMejora": "string", "sugerencias": "string", "puntuacionArmonia": 80, "timestamp": "ISO-8601"}` |
 
 ---
 
@@ -162,7 +194,7 @@ No se publican en el Gateway; solo se invocan dentro de la red de contenedores D
 
 ## 7. Identificadores Fijos de Demostración (`@Profile("seed")` y `V17`)
 
-Contraseña común de todas las cuentas de demostración: `clavesegura123`.
+Las cuentas de demostración son solo datos de ejemplo: el ingreso es exclusivamente con Google, así que no inician sesión. El rol ADMIN se otorga con la variable `ADMIN_EMAILS`.
 
 ### 7.1 Los 12 Usuarios de Demostración
 

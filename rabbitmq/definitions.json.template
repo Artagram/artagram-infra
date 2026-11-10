@@ -524,6 +524,23 @@
       "arguments": {}
     },
     {
+      "name": "notifications.post.moderated",
+      "vhost": "notifications",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-dead-letter-exchange": "artagram.dlx",
+        "x-dead-letter-routing-key": "notifications.post.moderated.dlq"
+      }
+    },
+    {
+      "name": "notifications.post.moderated.dlq",
+      "vhost": "notifications",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    },
+    {
       "name": "notifications.personal.message.notification",
       "vhost": "notifications",
       "durable": true,
@@ -535,23 +552,6 @@
     },
     {
       "name": "notifications.personal.message.notification.dlq",
-      "vhost": "notifications",
-      "durable": true,
-      "auto_delete": false,
-      "arguments": {}
-    },
-    {
-      "name": "notifications.verification.requested",
-      "vhost": "notifications",
-      "durable": true,
-      "auto_delete": false,
-      "arguments": {
-        "x-dead-letter-exchange": "artagram.dlx",
-        "x-dead-letter-routing-key": "notifications.verification.requested.dlq"
-      }
-    },
-    {
-      "name": "notifications.verification.requested.dlq",
       "vhost": "notifications",
       "durable": true,
       "auto_delete": false,
@@ -1068,11 +1068,27 @@
       "arguments": {}
     },
     {
+      "source": "artagram.events",
+      "vhost": "notifications",
+      "destination": "notifications.post.moderated",
+      "destination_type": "queue",
+      "routing_key": "post.moderated",
+      "arguments": {}
+    },
+    {
       "source": "artagram.dlx",
       "vhost": "notifications",
       "destination": "notifications.ai.completed.dlq",
       "destination_type": "queue",
       "routing_key": "notifications.ai.completed.dlq",
+      "arguments": {}
+    },
+    {
+      "source": "artagram.dlx",
+      "vhost": "notifications",
+      "destination": "notifications.post.moderated.dlq",
+      "destination_type": "queue",
+      "routing_key": "notifications.post.moderated.dlq",
       "arguments": {}
     },
     {
@@ -1089,22 +1105,6 @@
       "destination": "notifications.personal.message.notification.dlq",
       "destination_type": "queue",
       "routing_key": "notifications.personal.message.notification.dlq",
-      "arguments": {}
-    },
-    {
-      "source": "artagram.events",
-      "vhost": "notifications",
-      "destination": "notifications.verification.requested",
-      "destination_type": "queue",
-      "routing_key": "user.verification.requested",
-      "arguments": {}
-    },
-    {
-      "source": "artagram.dlx",
-      "vhost": "notifications",
-      "destination": "notifications.verification.requested.dlq",
-      "destination_type": "queue",
-      "routing_key": "notifications.verification.requested.dlq",
       "arguments": {}
     },
     {

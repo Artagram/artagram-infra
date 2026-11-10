@@ -325,7 +325,6 @@ contraseña de RDS 10 veces:
 | `JWT_PRIVATE_KEY_PEM` | solo `artagram-auth` la usa, pero vive en el mismo juego compartido — no hace daño que exista para los demás, que nunca la leen |
 | `MP_ACCESS_TOKEN`, `MERCADOPAGO_WEBHOOK_SECRET`, `PAGO_PROVEEDOR` | `artagram-users`/`artagram-payment` |
 | `GROQ_API_KEY` | `artagram-ai-worker` |
-| `EMAIL_MODE`, `EMAIL_FROM`, `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD` | `artagram-auth`/`artagram-notifications` (`EMAIL_MODE=log` si no se configura SMTP real todavía) |
 | `GRAFANA_URL`, `PROMETHEUS_URL` | `artagram-users` (dashboard de KPIs) |
 
 ### 9.2 Repository/Organization Variables (no son secretas)
@@ -334,6 +333,8 @@ contraseña de RDS 10 veces:
 |---|---|
 | `CORS_ORIGINS` | el dominio del frontend en producción |
 | `GATEWAY_PUBLIC_URL` | el dominio del ALB/Route53 del gateway (sin `https://`, el workflow lo antepone) |
+| `GOOGLE_CLIENT_ID` | client id de OAuth de Google Cloud (el mismo que `VITE_GOOGLE_CLIENT_ID` del frontend) |
+| `ADMIN_EMAILS` | correos de Google con rol ADMIN, separados por comas |
 
 ### 9.3 Qué NO hace falta crear por repo
 Nada — con Organization Secrets + `secrets: inherit`, los 10 repos quedan
@@ -376,3 +377,113 @@ instante exacto de un reinicio manual). Para un proyecto de curso sin
 tráfico de producción real, es un trade-off razonable. Si más adelante el presupuesto deja de ser una restricción,
 volver a ElastiCache/Amazon MQ administrados es un cambio de infraestructura
 aislado (cambiar el host/puerto de 2 variables), no un cambio de código.
+
+---
+
+## 11. HTTPS de extremo a extremo con CloudFront
+
+El ALB no tiene HTTPS: su dominio `*.elb.amazonaws.com` no admite un
+certificado de ACM, y el proyecto no tiene dominio propio. La solución es
+que **CloudFront sea el único punto de entrada público**: el navegador solo
+habla HTTPS con `dm9jdgs6nc89v.cloudfront.net`, y CloudFront reenvía la API y
+el WebSocket al ALB. Google Identity y Mercado Pago lo necesitan, y además
+elimina el bloqueo por contenido mixto.
+
+**Limitación aceptada:** el tramo CloudFront → ALB sigue en HTTP, dentro de
+la red de AWS. Cerrarlo requiere un dominio propio con certificado de ACM.
+
+Estos pasos se hacen en la consola de AWS, porque el usuario IAM
+`artagram-github-actions` no tiene permisos sobre CloudFront.
+
+### 11.1 Agregar el ALB como origen
+*CloudFront → distribución `E2FJFS7QLT0BH6` → Origins → Create origin*
+
+| Campo | Valor |
+|---|---|
+| Origin domain | `artagram-alb-1008759631.us-east-1.elb.amazonaws.com` |
+| Protocol | HTTP only, puerto 80 |
+| Name | `alb-api` |
+| Response timeout | 60 s |
+
+### 11.2 Crear los behaviors
+*Behaviors → Create behavior*, uno por cada patrón: `/api/*`, `/ws`, `/ws/*`,
+`/media/*` y `/.well-known/*`. Todos con:
+
+| Campo | Valor |
+|---|---|
+| Origin | `alb-api` |
+| Viewer protocol policy | Redirect HTTP to HTTPS |
+| Allowed HTTP methods | GET, HEAD, OPTIONS, PUT, POST, PATCH, DELETE |
+| Cache policy | `CachingDisabled` |
+| Origin request policy | `AllViewer` |
+
+### 11.3 Reemplazar el fallback de la SPA (importante)
+Revisar *Error pages*. Las *custom error responses* aplican a **toda la
+distribución**, no a un behavior: si existe una regla `403/404 → /index.html`,
+los errores de la API llegarían al frontend como HTML con estado `200`.
+
+1. *Functions → Create function*, nombre `spa-fallback`, con este código, y
+   publicarla:
+   ```js
+   function handler(event) {
+     var request = event.request;
+     // Las rutas sin extensión son rutas de React Router.
+     if (request.uri.indexOf('.') === -1) {
+       request.uri = '/index.html';
+     }
+     return request;
+   }
+   ```
+2. En el behavior **Default (\*)**: *Function associations → Viewer request →
+   CloudFront Functions → `spa-fallback`*.
+3. Borrar las reglas de *Error pages*.
+
+### 11.4 Forzar HTTPS en el frontend
+En el behavior **Default (\*)**: *Viewer protocol policy → Redirect HTTP to
+HTTPS* (hoy está en `allow-all`).
+
+### 11.5 Actualizar los orígenes permitidos
+- Variable `CORS_ORIGINS` de la organización en GitHub:
+  `https://dm9jdgs6nc89v.cloudfront.net`. Es una **Variable**, no un Secret.
+  Después hay que redesplegar los servicios que la usan, porque la task
+  definition se renderiza en el deploy.
+- CORS del bucket `artagram-uploads`: agregar ese mismo origen a
+  `AllowedOrigins`, para que sigan funcionando las subidas con URL prefirmada.
+
+### 11.6 Orden del despliegue
+El PR `feature/https-cloudfront` del frontend se integra **después** de
+completar 11.1 a 11.5. Si se integra antes, el frontend apuntará a rutas que
+CloudFront todavía no reenvía al ALB.
+
+### 11.7 Verificación
+Con los servicios de ECS arriba:
+```bash
+curl -I http://dm9jdgs6nc89v.cloudfront.net/feed             # 301 a https
+curl -I https://dm9jdgs6nc89v.cloudfront.net/feed            # 200, text/html
+curl -i https://dm9jdgs6nc89v.cloudfront.net/api/feed/explorar   # JSON de la API
+curl -i https://dm9jdgs6nc89v.cloudfront.net/api/no-existe       # 404 real, no HTML
+```
+En el navegador: iniciar sesión, abrir un lienzo y confirmar que `/ws`
+conecta por `wss://`.
+
+## 12. Mercado Pago
+
+El servicio `artagram-payment` usa Checkout Pro. `PAGO_PROVEEDOR` debe valer
+`mercadopago` en producción: con `fake`, `POST /api/suscripcion/confirmar`
+activa PRO sin pagar. Con `mercadopago`, el servicio no arranca si falta
+`MP_ACCESS_TOKEN`, y rechaza todos los webhooks si falta
+`MERCADOPAGO_WEBHOOK_SECRET`.
+
+1. En *Mercado Pago Developers → Tus integraciones*, crear una aplicación de
+   Checkout Pro y copiar el **Access Token** al secret `MP_ACCESS_TOKEN`
+   (primero el de prueba).
+2. En *Webhooks → Configurar notificaciones*, poner la URL
+   `https://dm9jdgs6nc89v.cloudfront.net/api/pagos/webhook/mercadopago`,
+   marcar el evento **Pagos** y copiar la **clave secreta** al secret
+   `MERCADOPAGO_WEBHOOK_SECRET`.
+3. El precio, la moneda y la URL de retorno son valores fijos en
+   `ecs/task-definitions/artagram-payment.json` (`PRO_PRECIO`, `PRO_MONEDA`,
+   `PAGO_RETORNO_URL`). La moneda debe coincidir con el país de la cuenta de
+   Mercado Pago.
+4. Para probar: comprar con un usuario de prueba de Mercado Pago y las
+   tarjetas de prueba de su documentación.
