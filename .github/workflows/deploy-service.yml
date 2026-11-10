@@ -7,6 +7,11 @@ name: Build, test and deploy a microservice to ECS Fargate
 #
 # En un pull request solo corren build+test (job build-test).
 # En un push a main corren build+test y, si pasan, el deploy a ECS.
+#
+# Flujo de ramas (ver README.md, "Flujo de trabajo"): nadie hace push
+# directo a main. Cada cambio llega por PR desde feature/* o fix/*, y el
+# ruleset de la organización exige que "ci-cd / build-test" esté en verde
+# antes del merge. El merge (squash) a main es lo que dispara el deploy.
 
 on:
   workflow_call:
@@ -51,6 +56,12 @@ jobs:
     needs: build-test
     runs-on: ubuntu-latest
     environment: production
+    # Dos merges seguidos al mismo servicio no despliegan en paralelo: el
+    # segundo espera a que termine el primero (no se cancela a mitad de un
+    # deploy de ECS).
+    concurrency:
+      group: deploy-${{ inputs.service-name }}
+      cancel-in-progress: false
     steps:
       - name: Checkout del servicio
         uses: actions/checkout@v4
