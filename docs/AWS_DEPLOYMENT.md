@@ -325,7 +325,7 @@ contraseña de RDS 10 veces:
 | `JWT_PRIVATE_KEY_PEM` | solo `artagram-auth` la usa, pero vive en el mismo juego compartido — no hace daño que exista para los demás, que nunca la leen |
 | `MP_ACCESS_TOKEN`, `MERCADOPAGO_WEBHOOK_SECRET`, `PAGO_PROVEEDOR` | `artagram-users`/`artagram-payment` |
 | `GROQ_API_KEY` | `artagram-ai-worker` |
-| `GRAFANA_URL`, `PROMETHEUS_URL` | `artagram-users` (dashboard de KPIs) |
+| ~~`GRAFANA_URL`, `PROMETHEUS_URL`~~ | Ya no son secretos: van fijos en la task definition de `artagram-users` |
 
 ### 9.2 Repository/Organization Variables (no son secretas)
 

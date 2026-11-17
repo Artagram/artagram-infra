@@ -166,8 +166,6 @@ jobs:
           MERCADOPAGO_WEBHOOK_SECRET: ${{ secrets.MERCADOPAGO_WEBHOOK_SECRET }}
           PAGO_PROVEEDOR: ${{ secrets.PAGO_PROVEEDOR }}
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
-          GRAFANA_URL: ${{ secrets.GRAFANA_URL }}
-          PROMETHEUS_URL: ${{ secrets.PROMETHEUS_URL }}
           CORS_ORIGINS: ${{ vars.CORS_ORIGINS }}
           GOOGLE_CLIENT_ID: ${{ vars.GOOGLE_CLIENT_ID }}
           ADMIN_EMAILS: ${{ vars.ADMIN_EMAILS }}

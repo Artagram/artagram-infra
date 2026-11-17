@@ -102,11 +102,11 @@
         },
         {
           "name": "GRAFANA_URL",
-          "value": "${GRAFANA_URL}"
+          "value": "http://artagram-alb-1008759631.us-east-1.elb.amazonaws.com/grafana"
         },
         {
           "name": "PROMETHEUS_URL",
-          "value": "${PROMETHEUS_URL}"
+          "value": "http://artagram-alb-1008759631.us-east-1.elb.amazonaws.com/grafana/explore"
         },
         {
           "name": "MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED",
