@@ -63,6 +63,14 @@
         {
           "name": "GROQ_MODEL",
           "value": "qwen/qwen3.8-27b"
+        },
+        {
+          "name": "MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED",
+          "value": "true"
+        },
+        {
+          "name": "IA_PROVEEDOR",
+          "value": "groq"
         }
       ],
       "logConfiguration": {
@@ -72,6 +80,16 @@
           "awslogs-region": "${AWS_REGION}",
           "awslogs-stream-prefix": "ecs"
         }
+      },
+      "healthCheck": {
+        "command": [
+          "CMD-SHELL",
+          "wget -q -T 3 -O /dev/null http://localhost:8087/actuator/health/liveness || exit 1"
+        ],
+        "interval": 10,
+        "timeout": 5,
+        "retries": 2,
+        "startPeriod": 180
       }
     }
   ]

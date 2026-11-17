@@ -1,0 +1,43 @@
+# Prometheus + Grafana en local, con la misma configuración de AWS salvo el
+# descubrimiento (aquí por nombre de contenedor):
+#
+#   docker compose -f compose.yml -f compose.services.yml -f compose.observabilidad.yml up -d
+#
+# Grafana: http://localhost:3001/grafana/ (admin / admin la primera vez)
+# Prometheus: http://localhost:9090
+services:
+  prometheus:
+    image: prom/prometheus:v2.55.1
+    container_name: artagram-prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.retention.time=2d
+      - --web.enable-lifecycle
+    volumes:
+      - ./observabilidad/prometheus/prometheus.local.yml:/etc/prometheus/prometheus.yml:ro
+      - ./observabilidad/prometheus/alertas.yml:/etc/prometheus/alertas.yml:ro
+    ports:
+      - "${PROMETHEUS_PORT:-9090}:9090"
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+    networks:
+      - artagram-net
+
+  grafana:
+    build: ./observabilidad/grafana
+    container_name: artagram-grafana
+    environment:
+      PROMETHEUS_URL: http://prometheus:9090
+      GF_SERVER_ROOT_URL: http://localhost:${GRAFANA_PORT:-3001}/grafana/
+    ports:
+      - "${GRAFANA_PORT:-3001}:3000"
+    depends_on:
+      - prometheus
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+    networks:
+      - artagram-net

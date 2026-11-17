@@ -83,6 +83,10 @@
         {
           "name": "ADMIN_EMAILS",
           "value": "${ADMIN_EMAILS}"
+        },
+        {
+          "name": "MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED",
+          "value": "true"
         }
       ],
       "logConfiguration": {
@@ -92,6 +96,16 @@
           "awslogs-region": "${AWS_REGION}",
           "awslogs-stream-prefix": "ecs"
         }
+      },
+      "healthCheck": {
+        "command": [
+          "CMD-SHELL",
+          "wget -q -T 3 -O /dev/null http://localhost:8081/actuator/health/liveness || exit 1"
+        ],
+        "interval": 10,
+        "timeout": 5,
+        "retries": 2,
+        "startPeriod": 180
       }
     }
   ]

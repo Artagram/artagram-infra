@@ -107,6 +107,10 @@
         {
           "name": "PROMETHEUS_URL",
           "value": "${PROMETHEUS_URL}"
+        },
+        {
+          "name": "MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED",
+          "value": "true"
         }
       ],
       "logConfiguration": {
@@ -116,6 +120,16 @@
           "awslogs-region": "${AWS_REGION}",
           "awslogs-stream-prefix": "ecs"
         }
+      },
+      "healthCheck": {
+        "command": [
+          "CMD-SHELL",
+          "wget -q -T 3 -O /dev/null http://localhost:8082/actuator/health/liveness || exit 1"
+        ],
+        "interval": 10,
+        "timeout": 5,
+        "retries": 2,
+        "startPeriod": 180
       }
     }
   ]
