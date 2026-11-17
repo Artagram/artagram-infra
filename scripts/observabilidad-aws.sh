@@ -29,11 +29,22 @@ SG_TAREAS_NOMBRE=artagram-fargate-sg
 SG_ALB_NOMBRE=artagram-alb-sg
 ALB_NOMBRE=artagram-alb
 TG_GATEWAY=artagram-gateway-tg
-export AWS_DEFAULT_REGION=$REGION
+# AWS_REGION manda sobre AWS_DEFAULT_REGION y CloudShell la fija a la región
+# de la consola: hay que fijar las dos.
+export AWS_DEFAULT_REGION=$REGION AWS_REGION=$REGION
 
 paso() { printf '\n==> %s\n' "$*"; }
+falla() { printf '\nERROR: %s\n' "$*" >&2; exit 1; }
+trap 'printf "\nERROR: falló la línea %s: %s\n" "$LINENO" "$BASH_COMMAND" >&2' ERR
 
-CUENTA=$(aws sts get-caller-identity --query Account --output text)
+command -v envsubst >/dev/null || falla "falta envsubst (CloudShell: sudo yum install -y gettext; Arch: sudo pacman -S gettext)"
+
+paso "0. Comprobaciones"
+CUENTA=$(aws sts get-caller-identity --query Account --output text) || falla "no hay credenciales de AWS"
+echo "   identidad: $(aws sts get-caller-identity --query Arn --output text)"
+case "$(aws sts get-caller-identity --query Arn --output text)" in
+  *artagram-github-actions*|*artagram-cloudfront*) falla "este usuario no tiene los permisos necesarios; usa CloudShell o un perfil administrador" ;;
+esac
 SG_TAREAS=$(aws ec2 describe-security-groups --filters "Name=group-name,Values=$SG_TAREAS_NOMBRE" --query 'SecurityGroups[0].GroupId' --output text)
 SG_ALB=$(aws ec2 describe-security-groups --filters "Name=group-name,Values=$SG_ALB_NOMBRE" --query 'SecurityGroups[0].GroupId' --output text)
 VPC=$(aws ec2 describe-security-groups --group-ids "$SG_TAREAS" --query 'SecurityGroups[0].VpcId' --output text)
@@ -42,6 +53,10 @@ SUBREDES=$(aws ecs describe-services --cluster $CLUSTER --services artagram-gate
   --query 'services[0].networkConfiguration.awsvpcConfiguration.subnets' --output text | tr '\t' ',')
 PUBLICA=$(aws ecs describe-services --cluster $CLUSTER --services artagram-gateway \
   --query 'services[0].networkConfiguration.awsvpcConfiguration.assignPublicIp' --output text)
+[ "$SG_TAREAS" != None ] && [ -n "$SG_TAREAS" ] || falla "no encontré el security group $SG_TAREAS_NOMBRE en $REGION"
+[ "$SG_ALB" != None ] && [ -n "$SG_ALB" ] || falla "no encontré el security group $SG_ALB_NOMBRE en $REGION"
+[ -n "$SUBREDES" ] && [ "$SUBREDES" != None ] || falla "no pude leer las subredes de artagram-gateway"
+echo "   cuenta $CUENTA, región $REGION, VPC $VPC"
 RED="awsvpcConfiguration={subnets=[$SUBREDES],securityGroups=[$SG_TAREAS],assignPublicIp=$PUBLICA}"
 
 paso "1. Repositorios ECR"
