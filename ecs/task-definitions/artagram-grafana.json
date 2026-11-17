@@ -31,6 +31,10 @@
         {
           "name": "PROMETHEUS_URL",
           "value": "http://prometheus.artagram.local:9090"
+        },
+        {
+          "name": "GF_SERVER_ROOT_URL",
+          "value": "http://artagram-alb-1008759631.us-east-1.elb.amazonaws.com/grafana/"
         }
       ],
       "healthCheck": {
