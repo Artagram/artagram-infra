@@ -69,7 +69,11 @@ organización `Artagram`.
 2. El PR ejecuta solo build y tests, sin desplegar:
    - microservicios: job **`ci-cd / build-test`** (`mvn verify`, con JaCoCo
      y SpotBugs);
-   - frontend: job **`Pruebas y Linting`** (lint, Vitest y build).
+   - frontend: job **`Pruebas y Linting`** (lint, Vitest con cobertura y
+     build).
+
+   Ambos envían además el análisis estático a SonarQube Cloud (ver
+   [Análisis estático](#análisis-estático-sonarqube-cloud)).
 3. Se necesita **1 aprobación** de otro integrante.
 4. Merge con **squash**: un commit por funcionalidad en `main`. El merge
    dispara el deploy del servicio afectado; dos merges seguidos del mismo
@@ -110,6 +114,41 @@ Automatically delete head branches*.
 > **Plan de GitHub:** los rulesets en repositorios **privados** requieren el
 > plan **GitHub Team** en la organización. Con el plan Free solo se aplican
 > a repositorios públicos.
+
+---
+
+## Análisis estático (SonarQube Cloud)
+
+Los 12 repositorios se analizan en [SonarQube Cloud](https://sonarcloud.io)
+(gratis para repositorios públicos):
+
+| Repositorio | Dónde corre el análisis | Cobertura |
+|---|---|---|
+| 10 microservicios `artagram-*` | Job `ci-cd / build-test` de `deploy-service.yml` (`sonar-maven-plugin` después de `mvn verify`) | JaCoCo, `target/site/jacoco/jacoco.xml` |
+| `ARTAGRAM-frontv1` | Job `Pruebas y Linting` de su `ci-cd.yml` (`sonarqube-scan-action`) | Vitest, `coverage/lcov.info` |
+| `artagram-infra` | Workflow `sonar.yml` (Compose, scripts, workflows, SQL) | — |
+
+El análisis **solo reporta**: no bloquea el merge aunque el Quality Gate
+falle. Si el secret `SONAR_TOKEN` no existe, el paso se omite y el pipeline
+sigue igual que antes.
+
+### Configuración (una sola vez)
+1. Entrar a sonarcloud.io con GitHub, *+ → Analyze new project → Import an
+   organization* y elegir la organización `Artagram`. Instalar la GitHub
+   App de SonarQube Cloud en los 12 repositorios.
+2. Anotar la *Organization key* que muestra SonarQube Cloud. Si **no** es
+   `artagram`, crear en GitHub la variable de organización
+   `SONAR_ORGANIZATION` con ese valor (*Organization settings → Secrets and
+   variables → Actions → Variables*).
+3. Importar los 12 proyectos. Las *Project key* deben ser
+   `Artagram_<repo>` (por ejemplo `Artagram_artagram-auth`,
+   `Artagram_ARTAGRAM-frontv1`), que es lo que propone SonarQube Cloud por
+   defecto.
+4. En cada proyecto: *Administration → Analysis Method* → **desactivar
+   Automatic Analysis** (si queda activo, el análisis desde CI falla).
+5. Generar un token en *My Account → Security* y guardarlo como secret de
+   organización **`SONAR_TOKEN`** (*Organization settings → Secrets and
+   variables → Actions → Secrets*), con acceso a todos los repositorios.
 
 ---
 
