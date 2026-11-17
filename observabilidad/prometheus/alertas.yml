@@ -1,0 +1,80 @@
+# Reglas de alerta. Prometheus las evalua cada 10 s; Grafana las muestra en
+# Alerting y en el tablero tecnico (panel "Alertas activas").
+#
+# Escenario 10: con scrape de 10 s, ventana de 30 s y "for" de 20 s, la
+# alerta de latencia se dispara en menos de 1 minuto desde que el p95 pasa
+# de 200 ms.
+groups:
+  - name: lienzo
+    rules:
+      - alert: LatenciaTrazosAlta
+        expr: |
+          histogram_quantile(0.95,
+            sum by (le, canal) (rate(trazo_propagacion_seconds_bucket{job="canvas", canal=~"lienzo|banner|fiesta"}[30s]))
+          ) > 0.2
+        for: 20s
+        labels:
+          severidad: critica
+          escenario: "10"
+        annotations:
+          resumen: "p95 de propagacion de trazos en {{ $labels.canal }} por encima de 200 ms"
+          descripcion: >-
+            El p95 entre que una replica publica un trazo y las replicas lo entregan es
+            {{ $value | humanizeDuration }}. Buscar en CloudWatch Logs Insights los mensajes
+            "Entrega de tiempo real lenta" del grupo /ecs/artagram-canvas: traen el traceId.
+
+      - alert: ProcesamientoTrazosLento
+        expr: |
+          histogram_quantile(0.95, sum by (le) (rate(trazo_latencia_ms_seconds_bucket{job="canvas"}[30s]))) > 0.2
+        for: 20s
+        labels:
+          severidad: critica
+          escenario: "10"
+        annotations:
+          resumen: "p95 de procesamiento de trazos finales por encima de 200 ms"
+          descripcion: "El servidor tarda {{ $value | humanizeDuration }} en guardar y difundir un trazo (BD o Redis lentos)."
+
+      - alert: AbusoEnBanner
+        expr: sum by (instance) (rate(banner_eventos_descartados_total[1m])) > 1
+        for: 0s
+        labels:
+          severidad: aviso
+          escenario: "7"
+        annotations:
+          resumen: "Un usuario supera el limite de eventos del banner"
+          descripcion: "Se descartan {{ $value | humanize }} eventos por segundo. El log de canvas trae usuario y comunidad."
+
+  - name: disponibilidad
+    rules:
+      - alert: ReplicaSinResponder
+        expr: up == 0
+        for: 20s
+        labels:
+          severidad: critica
+          escenario: "2"
+        annotations:
+          resumen: "{{ $labels.job }} ({{ $labels.instance }}) no responde"
+          descripcion: "Prometheus no puede leer las metricas de la replica. ECS la reemplaza al fallar su health check."
+
+      - alert: ErroresServidor
+        expr: |
+          sum by (job) (rate(http_server_requests_seconds_count{status=~"5.."}[1m]))
+            / sum by (job) (rate(http_server_requests_seconds_count[1m])) > 0.01
+        for: 1m
+        labels:
+          severidad: aviso
+        annotations:
+          resumen: "{{ $labels.job }} responde mas de 1 % de errores 5xx"
+          descripcion: "Tasa de error actual: {{ $value | humanizePercentage }}."
+
+  - name: seguridad
+    rules:
+      - alert: OrigenBloqueado
+        expr: increase(gateway_origenes_bloqueados_total[5m]) > 0
+        for: 0s
+        labels:
+          severidad: aviso
+          escenario: "6"
+        annotations:
+          resumen: "El gateway bloqueo un origen por intentos de autenticacion fallidos"
+          descripcion: "Ver en /ecs/artagram-gateway los eventos ORIGEN_BLOQUEADO y AUTENTICACION_RECHAZADA."

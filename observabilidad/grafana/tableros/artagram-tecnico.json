@@ -1,0 +1,787 @@
+{
+  "uid": "artagram-tecnico",
+  "title": "Artagram - Tablero técnico",
+  "tags": [
+    "artagram"
+  ],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "10s",
+  "time": {
+    "from": "now-30m",
+    "to": "now"
+  },
+  "editable": false,
+  "panels": [
+    {
+      "type": "row",
+      "title": "Lienzo en tiempo real (escenarios 1, 7 y 10)",
+      "id": 1,
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "panels": []
+    },
+    {
+      "type": "timeseries",
+      "title": "p95 de propagación de trazos entre réplicas",
+      "id": 2,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 1
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "thresholdsStyle": {
+              "mode": "line+area"
+            }
+          },
+          "unit": "s",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 0.2
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "refId": "A",
+          "expr": "histogram_quantile(0.95, sum by (le, canal) (rate(trazo_propagacion_seconds_bucket{job=\"canvas\"}[30s])))",
+          "legendFormat": "{{canal}}"
+        }
+      ],
+      "description": "Desde que una réplica publica el trazo en Redis hasta que cada réplica lo entrega. Objetivo: < 200 ms."
+    },
+    {
+      "type": "timeseries",
+      "title": "p95 de procesamiento de trazos finales",
+      "id": 3,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 1
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "thresholdsStyle": {
+              "mode": "line+area"
+            }
+          },
+          "unit": "s",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 0.2
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "refId": "A",
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(trazo_latencia_ms_seconds_bucket{job=\"canvas\"}[30s])))",
+          "legendFormat": "p95"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "refId": "B",
+          "expr": "histogram_quantile(0.50, sum by (le) (rate(trazo_latencia_ms_seconds_bucket{job=\"canvas\"}[30s])))",
+          "legendFormat": "p50"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Trazos finalizados por segundo",
+      "id": 4,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 0,
+        "y": 9
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {},
+          "unit": "ops"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "refId": "A",
+          "expr": "sum(rate(trazos_por_segundo_total{job=\"canvas\"}[1m]))",
+          "legendFormat": "trazos/s"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Entregas de tiempo real por segundo",
+      "id": 5,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 8,
+        "y": 9
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {},
+          "unit": "ops"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "refId": "A",
+          "expr": "sum by (canal) (rate(trazo_propagacion_seconds_count{job=\"canvas\"}[1m]))",
+          "legendFormat": "{{canal}}"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Eventos del banner descartados (límite 100/s por usuario)",
+      "id": 6,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 16,
+        "y": 9
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "thresholdsStyle": {
+              "mode": "line+area"
+            }
+          },
+          "unit": "ops",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "refId": "A",
+          "expr": "sum(rate(banner_eventos_descartados_total[1m]))",
+          "legendFormat": "descartados/s"
+        }
+      ]
+    },
+    {
+      "type": "row",
+      "title": "Alertas",
+      "id": 7,
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 17
+      },
+      "panels": []
+    },
+    {
+      "type": "table",
+      "title": "Alertas activas",
+      "id": 8,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 24,
+        "x": 0,
+        "y": 18
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {}
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "refId": "A",
+          "expr": "ALERTS{alertstate=\"firing\"}",
+          "format": "table",
+          "instant": true
+        }
+      ],
+      "options": {
+        "showHeader": true
+      },
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "Value": true,
+              "__name__": true,
+              "alertstate": true,
+              "entorno": true
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "row",
+      "title": "Disponibilidad (escenarios 2 y 3)",
+      "id": 9,
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 24
+      },
+      "panels": []
+    },
+    {
+      "type": "timeseries",
+      "title": "Réplicas que responden por servicio",
+      "id": 10,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 25
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {},
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "refId": "A",
+          "expr": "sum by (job) (up)",
+          "legendFormat": "{{job}}"
+        }
+      ],
+      "description": "Al caer una réplica, baja en 1 su servicio hasta que ECS la reemplaza."
+    },
+    {
+      "type": "timeseries",
+      "title": "Errores 5xx por servicio",
+      "id": 11,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 25
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "thresholdsStyle": {
+              "mode": "line+area"
+            }
+          },
+          "unit": "percentunit",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 0.01
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "refId": "A",
+          "expr": "sum by (job) (rate(http_server_requests_seconds_count{status=~\"5..\"}[1m])) / sum by (job) (rate(http_server_requests_seconds_count[1m]))",
+          "legendFormat": "{{job}}"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Peticiones por segundo por servicio",
+      "id": 12,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 33
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {},
+          "unit": "reqps"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "refId": "A",
+          "expr": "sum by (job) (rate(http_server_requests_seconds_count[1m]))",
+          "legendFormat": "{{job}}"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Latencia media HTTP por servicio",
+      "id": 13,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 33
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "thresholdsStyle": {
+              "mode": "line+area"
+            }
+          },
+          "unit": "s",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "refId": "A",
+          "expr": "sum by (job) (rate(http_server_requests_seconds_sum[1m])) / sum by (job) (rate(http_server_requests_seconds_count[1m]))",
+          "legendFormat": "{{job}}"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "p95 del gateway (todas las réplicas)",
+      "id": 14,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 41
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "thresholdsStyle": {
+              "mode": "line+area"
+            }
+          },
+          "unit": "s",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "refId": "A",
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(http_server_requests_seconds_bucket{job=\"gateway\"}[1m])))",
+          "legendFormat": "p95"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Mensajes de IA reintentados o fallidos",
+      "id": 15,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 41
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {},
+          "unit": "ops"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "refId": "A",
+          "expr": "sum by (job) (rate(spring_rabbitmq_listener_seconds_count{result=\"failure\"}[1m]))",
+          "legendFormat": "{{job}} fallidos"
+        }
+      ],
+      "description": "Tras 3 intentos el mensaje pasa a la cola de mensajes fallidos (DLQ)."
+    },
+    {
+      "type": "row",
+      "title": "Seguridad (escenarios 5 y 6)",
+      "id": 16,
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 49
+      },
+      "panels": []
+    },
+    {
+      "type": "timeseries",
+      "title": "Peticiones rechazadas en el gateway por motivo",
+      "id": 17,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 50
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {},
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "refId": "A",
+          "expr": "sum by (motivo) (rate(gateway_autenticacion_rechazada_total[1m])) * 60",
+          "legendFormat": "{{motivo}}"
+        }
+      ],
+      "description": "Por minuto: sin token, vencido o inválido. Ninguna llega a los microservicios."
+    },
+    {
+      "type": "stat",
+      "title": "Orígenes bloqueados (15 min)",
+      "id": 18,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 12,
+        "y": 50
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {},
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "refId": "A",
+          "expr": "sum(increase(gateway_origenes_bloqueados_total[15m]))",
+          "legendFormat": "bloqueados"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Respuestas 429 del gateway",
+      "id": 19,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 18,
+        "y": 50
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {}
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "refId": "A",
+          "expr": "sum(increase(http_server_requests_seconds_count{job=\"gateway\",status=\"429\"}[15m]))",
+          "legendFormat": "429"
+        }
+      ]
+    },
+    {
+      "type": "row",
+      "title": "JVM",
+      "id": 20,
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 58
+      },
+      "panels": []
+    },
+    {
+      "type": "timeseries",
+      "title": "Heap usado por servicio",
+      "id": 21,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 59
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {},
+          "unit": "bytes"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "refId": "A",
+          "expr": "sum by (job) (jvm_memory_used_bytes{area=\"heap\"})",
+          "legendFormat": "{{job}}"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "CPU del proceso por servicio",
+      "id": 22,
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 59
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {},
+          "unit": "percentunit"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "refId": "A",
+          "expr": "avg by (job) (process_cpu_usage)",
+          "legendFormat": "{{job}}"
+        }
+      ]
+    }
+  ]
+}

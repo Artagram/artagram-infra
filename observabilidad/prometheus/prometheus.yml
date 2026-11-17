@@ -1,0 +1,82 @@
+# Generado para AWS (ECS + Cloud Map). Cada job descubre TODAS las replicas de su servicio
+# por el DNS de Cloud Map (registros A, uno por tarea), asi el p95 se calcula sumando las replicas (escenarios 1, 2 y 10).
+global:
+  scrape_interval: 10s
+  evaluation_interval: 10s
+  external_labels:
+    entorno: aws
+
+rule_files:
+  - /etc/prometheus/alertas.yml
+
+scrape_configs:
+  - job_name: gateway
+    metrics_path: /actuator/prometheus
+    dns_sd_configs:
+      - names: ["gateway.artagram.local"]
+        type: A
+        port: 8080
+        refresh_interval: 15s
+  - job_name: auth
+    metrics_path: /actuator/prometheus
+    dns_sd_configs:
+      - names: ["auth.artagram.local"]
+        type: A
+        port: 8081
+        refresh_interval: 15s
+  - job_name: users
+    metrics_path: /actuator/prometheus
+    dns_sd_configs:
+      - names: ["users.artagram.local"]
+        type: A
+        port: 8082
+        refresh_interval: 15s
+  - job_name: feed
+    metrics_path: /actuator/prometheus
+    dns_sd_configs:
+      - names: ["feed.artagram.local"]
+        type: A
+        port: 8083
+        refresh_interval: 15s
+  - job_name: canvas
+    metrics_path: /actuator/prometheus
+    dns_sd_configs:
+      - names: ["canvas.artagram.local"]
+        type: A
+        port: 8084
+        refresh_interval: 15s
+  - job_name: chat
+    metrics_path: /actuator/prometheus
+    dns_sd_configs:
+      - names: ["chat.artagram.local"]
+        type: A
+        port: 8085
+        refresh_interval: 15s
+  - job_name: media-worker
+    metrics_path: /actuator/prometheus
+    dns_sd_configs:
+      - names: ["media-worker.artagram.local"]
+        type: A
+        port: 8086
+        refresh_interval: 15s
+  - job_name: ai-worker
+    metrics_path: /actuator/prometheus
+    dns_sd_configs:
+      - names: ["ai-worker.artagram.local"]
+        type: A
+        port: 8087
+        refresh_interval: 15s
+  - job_name: payment
+    metrics_path: /actuator/prometheus
+    dns_sd_configs:
+      - names: ["payment.artagram.local"]
+        type: A
+        port: 8089
+        refresh_interval: 15s
+  - job_name: notifications
+    metrics_path: /actuator/prometheus
+    dns_sd_configs:
+      - names: ["notifications.artagram.local"]
+        type: A
+        port: 8090
+        refresh_interval: 15s

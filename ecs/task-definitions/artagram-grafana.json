@@ -1,0 +1,56 @@
+{
+  "family": "artagram-grafana",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": [
+    "FARGATE"
+  ],
+  "cpu": "256",
+  "memory": "512",
+  "executionRoleArn": "arn:aws:iam::${AWS_ACCOUNT_ID}:role/artagramEcsTaskExecutionRole",
+  "taskRoleArn": "arn:aws:iam::${AWS_ACCOUNT_ID}:role/artagramEcsTaskRole",
+  "containerDefinitions": [
+    {
+      "name": "artagram-grafana",
+      "image": "${IMAGE_URI}",
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 3000,
+          "protocol": "tcp"
+        }
+      ],
+      "environment": [
+        {
+          "name": "GF_SECURITY_ADMIN_USER",
+          "value": "admin"
+        },
+        {
+          "name": "GF_SECURITY_ADMIN_PASSWORD",
+          "value": "${GRAFANA_ADMIN_PASSWORD}"
+        },
+        {
+          "name": "PROMETHEUS_URL",
+          "value": "http://prometheus.artagram.local:9090"
+        }
+      ],
+      "healthCheck": {
+        "command": [
+          "CMD-SHELL",
+          "wget -q -T 3 -O /dev/null http://localhost:3000/api/health || exit 1"
+        ],
+        "interval": 15,
+        "timeout": 5,
+        "retries": 3,
+        "startPeriod": 60
+      },
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/artagram-grafana",
+          "awslogs-region": "${AWS_REGION}",
+          "awslogs-stream-prefix": "ecs"
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+apiVersion: 1
+providers:
+  - name: artagram
+    folder: Artagram
+    type: file
+    disableDeletion: true
+    allowUiUpdates: false
+    options:
+      path: /var/lib/grafana/tableros

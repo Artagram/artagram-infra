@@ -67,6 +67,22 @@
         {
           "name": "CORS_ORIGINS",
           "value": "${CORS_ORIGINS}"
+        },
+        {
+          "name": "MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED",
+          "value": "true"
+        },
+        {
+          "name": "REDIS_HOST",
+          "value": "redis.artagram.local"
+        },
+        {
+          "name": "REDIS_PORT",
+          "value": "6379"
+        },
+        {
+          "name": "GATEWAY_PROXIES_CONFIABLES",
+          "value": "2"
         }
       ],
       "logConfiguration": {
@@ -76,6 +92,16 @@
           "awslogs-region": "${AWS_REGION}",
           "awslogs-stream-prefix": "ecs"
         }
+      },
+      "healthCheck": {
+        "command": [
+          "CMD-SHELL",
+          "wget -q -T 3 -O /dev/null http://localhost:8080/actuator/health/liveness || exit 1"
+        ],
+        "interval": 10,
+        "timeout": 5,
+        "retries": 2,
+        "startPeriod": 180
       }
     }
   ]
