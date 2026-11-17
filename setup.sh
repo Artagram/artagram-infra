@@ -6,7 +6,7 @@ echo "           Iniciando ArtaGram en Linux / WSL              "
 echo "=========================================================="
 
 # 1. Crear .env si no existe
-if [ ! -f .env ]; then
+if [[ ! -f .env ]]; then
   echo "[+] Creando .env desde .env.example..."
   cp .env.example .env
 else
@@ -14,7 +14,7 @@ else
 fi
 
 # 2. Generar llaves RSA para autenticación RS256
-if [ ! -f secrets-dev/jwt-private.pem ] || [ ! -f secrets-dev/jwt-public.pem ]; then
+if [[ ! -f secrets-dev/jwt-private.pem || ! -f secrets-dev/jwt-public.pem ]]; then
   echo "[+] Generando par de llaves RSA dev (2048-bit) con GenerarLlavesRsa.java..."
   mkdir -p secrets-dev
   java scripts/GenerarLlavesRsa.java
