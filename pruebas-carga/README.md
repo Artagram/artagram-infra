@@ -39,6 +39,27 @@ k6 run -e BASE_URL=$ALB -e TOKEN_VALIDO=$(node -e "console.log(require('./tokens
 k6 run -e BASE_URL=$ALB -e TOKENS=tokens.json escenario7-banner.js
 ```
 
+### Correr desde AWS (recomendado para el escenario 1 completo)
+
+Desde un equipo propio la medición incluye la latencia de internet hasta
+us-east-1 (unos 80 ms desde Colombia) y el escenario 1 completo necesita unos
+475 Mbit/s de bajada. `scripts/k6-en-ecs.sh` lanza k6 como una tarea temporal
+de Fargate (4 vCPU, 8 GB) en la misma red que los servicios:
+
+```bash
+scripts/k6-en-ecs.sh escenario1-trazos.js ~/jwt-prod.pem SALAS=10   # reducida
+scripts/k6-en-ecs.sh escenario1-trazos.js ~/jwt-prod.pem            # completa
+```
+
+- Los tokens se firman dentro de k6 (`lib/tokens.js`) con la llave que se
+  pasa; la llave va solo en los overrides de esa corrida, no en la task
+  definition `artagram-k6`.
+- El script espera a que la tarea termine y sale con el código de k6: `0` si
+  se cumplieron los umbrales, `99` si no.
+- El resumen queda en CloudWatch Logs, grupo `/ecs/artagram-gateway`, streams
+  `k6/k6/<tarea>` (el rol de ejecución no puede crear grupos nuevos).
+- Cuesta unos centavos por corrida (Fargate cobra por segundo).
+
 ### Escenario 2: tirar una réplica a mitad de prueba
 
 Con `artagram-feed` en 2 tareas, unos 90 s después de empezar:

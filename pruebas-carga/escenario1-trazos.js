@@ -3,9 +3,11 @@
 // sala, aunque estén en otra réplica) y cuenta los trazos perdidos.
 //
 //   k6 run -e BASE_URL=http://<alb> -e TOKENS=tokens.json escenario1-trazos.js
+//   k6 run -e BASE_URL=http://<alb> -e LLAVE_PEM="$(cat llave.pem)" escenario1-trazos.js   # tokens firmados aquí (ECS)
 import ws from 'k6/ws';
 import { check } from 'k6';
 import { Counter, Rate, Trend } from 'k6/metrics';
+import { generarTokens } from './lib/tokens.js';
 import { WS_URL, cargarTokens, crearComunidad, frame, horaDeUuid, leerFrames, sujeto, unirse, uuidConHora } from './lib/comun.js';
 
 const SALAS = Number(__ENV.SALAS || 50);
@@ -14,7 +16,9 @@ const EVENTOS_POR_SEG = Number(__ENV.EVENTOS_POR_SEG || 30);
 const DURACION_S = Number(__ENV.DURACION_S || 120);
 const USUARIOS = SALAS * POR_SALA;
 
-const tokens = cargarTokens();
+// Con LLAVE_PEM los tokens se firman en setup() (corrida desde ECS, ver
+// ../scripts/k6-en-ecs.sh); si no, se leen de TOKENS como siempre.
+const tokensArchivo = __ENV.LLAVE_PEM ? null : cargarTokens();
 const latencia = new Trend('trazo_e2e_ms', true);
 const enviados = new Counter('trazos_enviados');
 const recibidos = new Counter('trazos_recibidos_de_otros');
@@ -31,7 +35,8 @@ export const options = {
   setupTimeout: '5m',
 };
 
-export function setup() {
+export async function setup() {
+  const tokens = tokensArchivo || (await generarTokens(USUARIOS, __ENV.LLAVE_PEM));
   if (tokens.length < USUARIOS) throw new Error(`Se necesitan ${USUARIOS} tokens y hay ${tokens.length}`);
   const salas = [];
   for (let s = 0; s < SALAS; s++) {
@@ -39,10 +44,10 @@ export function setup() {
     for (let i = 1; i < POR_SALA; i++) unirse(tokens[s * POR_SALA + i], id);
     salas.push(id);
   }
-  return { salas };
+  return { salas, tokens };
 }
 
-export default function ({ salas }) {
+export default function ({ salas, tokens }) {
   const indice = __VU - 1;
   const token = tokens[indice];
   const yo = sujeto(token);
