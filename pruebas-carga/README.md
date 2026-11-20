@@ -60,6 +60,17 @@ scripts/k6-en-ecs.sh escenario1-trazos.js ~/jwt-prod.pem            # completa
   `k6/k6/<tarea>` (el rol de ejecución no puede crear grupos nuevos).
 - Cuesta unos centavos por corrida (Fargate cobra por segundo).
 
+### Escenario 5: credencial de Google falsificada
+
+```bash
+node escenario5-credencial-falsa.mjs                       # malformado, firma falsa y alterado
+node escenario5-credencial-falsa.mjs --vencido <token> --otra-app <token>   # con tokens reales de Google
+```
+
+Cada intento debe dar 401 sin token de acceso; sale con 0 si se rechazó el
+100 %. Los motivos quedan en `/ecs/artagram-auth` ("Ingreso con Google
+rechazado: motivo=…").
+
 ### Escenario 2: tirar una réplica a mitad de prueba
 
 Con `artagram-feed` en 2 tareas, unos 90 s después de empezar:
