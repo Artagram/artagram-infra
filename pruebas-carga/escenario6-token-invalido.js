@@ -13,6 +13,9 @@ import { BASE_URL } from './lib/comun.js';
 const rechazadas = new Counter('rechazadas_401');
 const bloqueadas = new Counter('bloqueadas_429');
 const filtradas = new Counter('respuestas_no_esperadas');
+// Sin respuesta (status 0): la conexión no se abrió, así que la petición no
+// llegó a nada. Se cuenta aparte para no confundirla con una que se coló.
+const sinConexion = new Counter('sin_conexion');
 
 export const options = {
   scenarios: {
@@ -43,6 +46,7 @@ export default function () {
   const r = http.get(`${BASE_URL}/api/feed/siguiendo`, token ? { headers: { Authorization: `Bearer ${token}` } } : {});
   if (r.status === 401) rechazadas.add(1);
   else if (r.status === 429) bloqueadas.add(1);
+  else if (r.status === 0) sinConexion.add(1);
   else filtradas.add(1);
-  check(r, { 'rechazada en el gateway (401/429)': () => r.status === 401 || r.status === 429 });
+  check(r, { 'no llegó al microservicio (401/429)': () => r.status === 401 || r.status === 429 || r.status === 0 });
 }

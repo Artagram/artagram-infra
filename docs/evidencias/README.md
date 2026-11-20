@@ -1,4 +1,4 @@
-# Evidencias de los escenarios de disponibilidad
+# Evidencias de los escenarios de calidad
 
 Capturas de la salida real de cada comando, con su hora, tomadas contra
 producción (AWS us-east-1) el 2026-11-19. Cada imagen es un paso; en las
@@ -66,3 +66,33 @@ estas corridas: la reconexión podía tardar ~22 s porque un intento colgado
 esperaba el timeout del navegador (ahora `connectionTimeout` de 2 s y
 reconexión inmediata con el evento `online`), y el trazo dibujado sin red se
 pintaba dos veces al resincronizar.
+
+## Escenario 6: petición con token de acceso inválido
+
+Un atacante (una tarea de Fargate con k6, IP pública `32.192.197.107`) manda
+20 peticiones por minuto durante 3 min a `/api/feed/siguiendo`: sin token, con
+token vencido, con la firma alterada y firmado con otra llave
+(`pruebas-carga/escenario6-token-invalido.js`).
+
+| Medida | Pide | Resultado |
+|---|---|---|
+| Peticiones con token inválido frenadas en el gateway | 100 % | **100 %**: 61 de 61 (10 con 401 `NO_AUTENTICADO`, 51 con 429 `ORIGEN_BLOQUEADO`) |
+| Peticiones que llegan a los microservicios | 0 | **0**: las peticiones reenviadas a feed no cambian en ninguna de las dos réplicas del gateway (1 y 0 antes y después) |
+| Intentos registrados | 100 % | **100 %**: 10 `AUTENTICACION_RECHAZADA` + 51 `PETICION_BLOQUEADA` = 61, cada uno con ruta y traceId |
+| Origen bloqueado | < 1 min | **27 s** después del primer intento (al décimo fallo), por 15 min |
+
+- `paso-1`: métricas de las dos réplicas del gateway antes del ataque.
+- `paso-2`/`paso-3`: el ataque desde Fargate y el resumen de k6 con los umbrales cumplidos.
+- `paso-4`: métricas después: rechazos, un bloqueo, 51 peticiones bloqueadas y
+  las peticiones reenviadas a feed sin cambios. Los rechazos por
+  `TOKEN_VENCIDO` son de otros orígenes (sesiones vencidas de navegadores), no del atacante.
+- `paso-5`: CloudWatch Logs Insights: los 61 intentos del atacante registrados por tipo.
+- `paso-6`: línea de tiempo: 10 rechazos, el bloqueo y las peticiones cortadas con 429.
+- `paso-7`: feed no registró nada de la ruta atacada.
+
+El bloqueo vive en Redis, así que vale para las dos réplicas del gateway (cada
+una atendió la mitad de las peticiones bloqueadas: 25 y 26).
+
+Hallazgo: las peticiones que llegaban con el origen ya bloqueado se cortaban
+con 429 pero no quedaban en el log. Se agregó el evento `PETICION_BLOQUEADA`
+y la métrica `gateway_peticiones_bloqueadas_total` (artagram-gateway `3254db5`).
