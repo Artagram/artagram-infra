@@ -43,4 +43,26 @@ cumplía (99,94 %) pero el p95 fue de 13 s porque feed se saturaba. Se subió a
 
 ## Escenario 4: reconexión en el lienzo
 
-Ver `escenario4/`.
+Dos navegadores reales (Firefox con Playwright) en el mismo lienzo de
+producción. Al navegador A se le corta la red, dibuja sin conexión mientras B
+también dibuja, y se le devuelve la red
+(`pruebas-carga/escenario4-navegador.mjs`). Tres corridas seguidas:
+
+| Medida | Pide | Resultado |
+|---|---|---|
+| Aviso de pérdida de conexión | inmediato | **~30 ms** después del corte |
+| Reconexión | < 5 s | **3,94 s**, 3,95 s y 3,94 s |
+| Lienzos tras reconectar | idénticos | **idénticos** (misma huella SHA-256 de los píxeles en A y B) |
+
+- `navegador-1` a `navegador-5`: A a la izquierda y B a la derecha, en cada
+  paso: inicio, trazo en vivo, corte de red (aviso en A), dibujo sin red y
+  estado final con los tres trazos en ambos.
+- `automatizada-1` a `automatizada-3`: pruebas unitarias del cliente STOMP
+  (reconexión, cola de mensajes y resincronización).
+- `resumen.txt`: salida de las tres corridas.
+
+Hallazgos que la prueba encontró y se corrigieron en el frontend antes de
+estas corridas: la reconexión podía tardar ~22 s porque un intento colgado
+esperaba el timeout del navegador (ahora `connectionTimeout` de 2 s y
+reconexión inmediata con el evento `online`), y el trazo dibujado sin red se
+pintaba dos veces al resincronizar.

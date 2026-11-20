@@ -1,0 +1,42 @@
+== Corrida 1
+22:08:25.534  Comunidad a186429a-844e-4483-ae9d-63749d6afe08: A=carga_09165f_0 B=carga_09165f_1
+22:08:33.788  1. Los dos navegadores abren el mismo lienzo
+22:08:35.961  2. A dibuja con conexión: el trazo llega a B en vivo
+22:08:36.105  3. Se corta la red del navegador A
+22:08:36.136     A muestra el aviso de reconexión 30 ms después del corte
+22:08:38.672  4. Sin red, A dibuja un trazo (queda en su cola) y B dibuja otro
+22:08:38.826  5. Vuelve la red del navegador A
+22:08:42.515     [A] GET /api/comunidades/a186429a-844e-4483-ae9d-63749d6afe08/lienzo/trazos?desde=0
+22:08:42.660     [A] respuesta 200 con 3 trazos
+22:08:42.772     A reconectó en 3947 ms (el aviso desaparece)
+22:08:45.964  6. Huella del lienzo (SHA-256 de los píxeles): A=d00b6e0020fc3670 B=d00b6e0020fc3670 -> IDÉNTICOS
+22:08:45.964  RESULTADO: reconexión 3947 ms (pide < 5000 ms); lienzos idénticos
+
+== Corrida 2
+22:08:47.508  Comunidad ede20f34-0718-40a9-88eb-4067cbeafef7: A=carga_09165f_2 B=carga_09165f_3
+22:08:55.703  1. Los dos navegadores abren el mismo lienzo
+22:08:57.920  2. A dibuja con conexión: el trazo llega a B en vivo
+22:08:58.051  3. Se corta la red del navegador A
+22:08:58.083     A muestra el aviso de reconexión 31 ms después del corte
+22:09:00.568  4. Sin red, A dibuja un trazo (queda en su cola) y B dibuja otro
+22:09:00.776  5. Vuelve la red del navegador A
+22:09:04.512     [A] GET /api/comunidades/ede20f34-0718-40a9-88eb-4067cbeafef7/lienzo/trazos?desde=0
+22:09:04.653     [A] respuesta 200 con 3 trazos
+22:09:04.725     A reconectó en 3949 ms (el aviso desaparece)
+22:09:07.923  6. Huella del lienzo (SHA-256 de los píxeles): A=d00b6e0020fc3670 B=d00b6e0020fc3670 -> IDÉNTICOS
+22:09:07.923  RESULTADO: reconexión 3949 ms (pide < 5000 ms); lienzos idénticos
+
+== Corrida 3
+22:09:09.512  Comunidad 48625120-094c-461d-8911-ee21baec8549: A=carga_09165f_4 B=carga_09165f_5
+22:09:17.515  1. Los dos navegadores abren el mismo lienzo
+22:09:45.257  2. A dibuja con conexión: el trazo llega a B en vivo
+22:09:45.403  3. Se corta la red del navegador A
+22:09:45.429     A muestra el aviso de reconexión 26 ms después del corte
+22:09:47.884  4. Sin red, A dibuja un trazo (queda en su cola) y B dibuja otro
+22:09:48.016  5. Vuelve la red del navegador A
+22:09:51.830     [A] GET /api/comunidades/48625120-094c-461d-8911-ee21baec8549/lienzo/trazos?desde=0
+22:09:51.953     A reconectó en 3936 ms (el aviso desaparece)
+22:09:51.970     [A] respuesta 200 con 3 trazos
+22:09:55.143  6. Huella del lienzo (SHA-256 de los píxeles): A=d00b6e0020fc3670 B=d00b6e0020fc3670 -> IDÉNTICOS
+22:09:55.143  RESULTADO: reconexión 3936 ms (pide < 5000 ms); lienzos idénticos
+
